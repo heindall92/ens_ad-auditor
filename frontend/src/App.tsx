@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetchControls, fetchMarkdownReport, fetchScan } from "./api/client";
+import { fetchControls, fetchMarkdownReport, fetchScan, runAudit } from "./api/client";
+import ConnectionForm, { EMPTY_DRAFT, draftToRequest, type ConnectionDraft } from "./components/ConnectionForm";
 import ControlsTable, { buildControlStats } from "./components/ControlsTable";
 import FindingCard from "./components/FindingCard";
 import Icon from "./components/Icon";
@@ -14,7 +15,7 @@ import SettingsPage from "./pages/SettingsPage";
 import SupportPage from "./pages/SupportPage";
 import { useSettings } from "./settings/SettingsContext";
 import type { TKey } from "./settings/i18n";
-import { RISK_ORDER, type GRCAlert, type RiskLevel, type ScanResponse } from "./types";
+import { RISK_ORDER, type AuditRequest, type GRCAlert, type RiskLevel, type ScanResponse } from "./types";
 
 const SECTION_LABEL: Record<SectionId, TKey> = {
   panel: "nav.panel",
@@ -36,7 +37,7 @@ function formatDate(iso: string, locale: string): string {
   return d.toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
 }
 
-// Best-effort AD domain for the sidebar context card (e.g. "APP01$@corp.example.local").
+// Best-effort AD domain for the sidebar context card (e.g. "APP01$@dominio.local").
 function detectDomain(alerts: GRCAlert[]): string | null {
   for (const a of alerts) {
     const m = a.finding.target.match(/@\s*([\w-]+(?:\.[\w-]+)+)/);
@@ -67,6 +68,8 @@ export default function App() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [initialSettled, setInitialSettled] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
+  const [draft, setDraft] = useState<ConnectionDraft>(EMPTY_DRAFT);
+  const sessionRef = useRef<AuditRequest | null>(null);
   const firstLoad = useRef(true);
   const pendingScroll = useRef<SectionId | null>(null);
 
@@ -85,14 +88,13 @@ export default function App() {
     document.body.classList.toggle("drawer-open", drawerOpen);
   }, [drawerOpen]);
 
-  const load = useCallback(async () => {
+  const loadEmpty = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetchScan();
       setData(res);
       setPreview(null);
-      if (!firstLoad.current) notify(tRef.current("toast.rescanned", { n: res.total_alerts }));
     } catch (e) {
       setError(e instanceof Error ? e.message : tRef.current("common.unknownError"));
     } finally {
@@ -100,15 +102,51 @@ export default function App() {
       setLoading(false);
       setInitialSettled(true);
     }
-  }, [notify]);
+  }, []);
+
+  const auditWith = useCallback(
+    async (req: AuditRequest) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await runAudit(req);
+        sessionRef.current = req;
+        setData(res);
+        setPreview(null);
+        notify(tRef.current("toast.rescanned", { n: res.total_alerts }));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : tRef.current("common.unknownError"));
+      } finally {
+        firstLoad.current = false;
+        setLoading(false);
+        setInitialSettled(true);
+      }
+    },
+    [notify],
+  );
+
+  const submitAudit = useCallback(() => {
+    auditWith(draftToRequest(draft));
+  }, [auditWith, draft]);
+
+  const clearSession = useCallback(() => {
+    sessionRef.current = null;
+    setDraft(EMPTY_DRAFT);
+    loadEmpty();
+  }, [loadEmpty]);
+
+  const rescan = useCallback(() => {
+    const req = sessionRef.current;
+    if (req) auditWith(req);
+    else loadEmpty();
+  }, [auditWith, loadEmpty]);
 
   useEffect(() => {
-    load();
-    // Optional catalogue of op.acc controls; the panel degrades gracefully without it.
+    loadEmpty();
     fetchControls()
       .then((c) => setCatalog(c.controls))
       .catch(() => setCatalog(null));
-  }, [load]);
+  }, [loadEmpty]);
 
   // Track the section in view to highlight the nav item and breadcrumb (dashboard only).
   useEffect(() => {
@@ -190,7 +228,7 @@ export default function App() {
   const downloadReport = async () => {
     setDownloading(true);
     try {
-      const md = await fetchMarkdownReport();
+      const md = await fetchMarkdownReport(sessionRef.current ?? undefined);
       const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -209,7 +247,7 @@ export default function App() {
   const loadPreview = async () => {
     setPreviewLoading(true);
     try {
-      setPreview(await fetchMarkdownReport());
+      setPreview(await fetchMarkdownReport(sessionRef.current ?? undefined));
     } catch (e) {
       setError(e instanceof Error ? e.message : t("err.report"));
     } finally {
@@ -221,7 +259,11 @@ export default function App() {
 
   const counts = data?.counts_by_risk ?? { Critico: 0, Alto: 0, Medio: 0, Bajo: 0 };
   const total = data?.total_alerts ?? 0;
-  const domain = (data && detectDomain(data.alerts)) || t("ctx.domainFallback");
+  const scanned = !!data?.scanned;
+  const domain =
+    (scanned && data?.domain) ||
+    (data && detectDomain(data.alerts)) ||
+    t("ctx.domainFallback");
   const generatedAt = data ? formatDate(data.generated_at, locale) : null;
   const crumb = view === "dashboard" ? t(SECTION_LABEL[section]) : t(PAGE_LABEL[view]);
 
@@ -239,7 +281,7 @@ export default function App() {
           controlsAffected={affectedControls}
           domain={domain}
           isSample={!!data?.is_sample}
-          hasData={!!data}
+          hasData={scanned}
           onNavigate={navigate}
           onOpenPage={openPage}
         />
@@ -253,7 +295,7 @@ export default function App() {
             loading={loading}
             downloading={downloading}
             canDownload={!!data}
-            onRescan={load}
+            onRescan={rescan}
             onDownload={downloadReport}
             onOpenDrawer={() => setDrawerOpen(true)}
             onOpenHelp={() => openPage("ayuda")}
@@ -307,14 +349,38 @@ export default function App() {
                   </div>
                 )}
 
+                <ConnectionForm
+                  draft={draft}
+                  onChange={setDraft}
+                  connectedDomain={scanned ? data?.domain ?? null : null}
+                  connectedUser={scanned ? sessionRef.current?.username ?? null : null}
+                  loading={loading}
+                  onSubmit={submitAudit}
+                  onClear={clearSession}
+                />
+
                 {error && (
                   <div className="alert crit" role="alert">
                     <Icon name="alert" />
                     <span className="spacer">{error}</span>
-                    <button type="button" className="btn sm" onClick={load}>
+                    <button type="button" className="btn sm" onClick={rescan}>
                       <Icon name="refresh" size={15} />
                       {t("common.retry")}
                     </button>
+                  </div>
+                )}
+
+                {!!data?.errors?.length && (
+                  <div className="alert warn" role="status">
+                    <Icon name="info" />
+                    <div>
+                      <b>{t("conn.errors")}</b>
+                      <ul className="err-list">
+                        {data.errors.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 )}
 
@@ -428,8 +494,24 @@ export default function App() {
                         <div className="card">
                           <div className="empty-state">
                             <Icon name="shieldCheck" size={28} className="accent" />
-                            <h3>{t("findings.emptyTitle")}</h3>
-                            <p>{t("findings.emptyText")}</p>
+                            <h3>
+                              {t(
+                                riskFilter || controlFilter
+                                  ? "findings.emptyTitle"
+                                  : scanned
+                                    ? "findings.cleanTitle"
+                                    : "findings.noScanTitle",
+                              )}
+                            </h3>
+                            <p>
+                              {t(
+                                riskFilter || controlFilter
+                                  ? "findings.emptyText"
+                                  : scanned
+                                    ? "findings.cleanText"
+                                    : "findings.noScanText",
+                              )}
+                            </p>
                             {(riskFilter || controlFilter) && (
                               <button
                                 type="button"

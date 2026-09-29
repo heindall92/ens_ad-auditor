@@ -43,7 +43,7 @@ const es: HelpContent = {
   steps: [
     {
       title: "Enumeración de Active Directory",
-      text: "Los módulos de Kerberos, delegación, AD CS y SMB recogen hallazgos técnicos. En esta versión devuelven datos de muestra marcados como tales.",
+      text: "Conecta con un dominio autorizado (controlador, usuario y contraseña o hash NT). Los módulos de Kerberos, delegación, AD CS y SMB recogen solo la configuración débil observada. Sin conexión no hay alertas.",
       go: "panel",
     },
     {
@@ -72,8 +72,8 @@ const es: HelpContent = {
       text: "Lo fija la regla de mapeo según el impacto de la técnica: una vía directa a administrador de dominio es Crítico; una credencial crackeable, Alto.",
     },
     {
-      title: "Datos de muestra",
-      text: "Mientras el banner de demostración esté visible, ningún dato procede de un dominio real. No hay escaneo en red en esta versión.",
+      title: "Autorización",
+      text: "Antes de conectar hay que confirmar por escrito que el propietario autoriza la enumeración. La contraseña y el hash no se guardan en disco ni en el repositorio.",
     },
   ],
   glossary: [
@@ -101,7 +101,7 @@ const es: HelpContent = {
     ["op.acc.7 · Acceso remoto (remote login)", "Protección del acceso a través de la red: canales cifrados, firmados y autenticados."],
   ],
   faq: [
-    ["¿La herramienta escanea mi dominio?", "No en esta versión. Los módulos de enumeración devuelven datos de muestra marcados como demostración. Un escaneo real requiere autorización expresa por escrito."],
+    ["¿La herramienta escanea mi dominio?", "Solo si indicas un controlador, un usuario y una contraseña o hash NT, y confirmas que tienes autorización por escrito. GET /api/scan sin credenciales devuelve cero alertas. La enumeración es de solo lectura: no se solicitan tickets TGS ni se explotan plantillas."],
     ["¿Por qué una alerta afecta a varios controles op.acc?", "Una misma debilidad suele romper varias salvaguardas. Por ejemplo, ESC8 afecta al mecanismo de autenticación (op.acc.5), al acceso remoto (op.acc.7) y a la gestión de derechos (op.acc.4). El control marcado como principal es el que se incumple directamente."],
     ["¿Cómo se decide el nivel de riesgo?", "Lo define la regla de mapeo de cada tipo de hallazgo según el impacto: las vías directas a administrador de dominio son Críticas y las credenciales crackeables, Altas."],
     ["¿Puedo filtrar los hallazgos?", "Sí. Pulsa una tarjeta de severidad para filtrar por riesgo, o un control en la tabla de controles ENS para ver solo sus alertas. Los filtros activos aparecen sobre la lista."],
@@ -109,7 +109,7 @@ const es: HelpContent = {
     ["¿Dónde se guardan mis preferencias?", "En el localStorage de este navegador: tema, acento, idioma y densidad. No se envían al backend."],
   ],
   about: [
-    "ENS AD Auditor 0.1.0. Auditor de Active Directory mapeado al Esquema Nacional de Seguridad.",
+    "ENS AD Auditor 0.2.0. Auditor de Active Directory mapeado al Esquema Nacional de Seguridad.",
     "Autor: Yoandy Ramírez Delgado.",
     "Marco de referencia: Real Decreto 311/2022 (ENS), marco operacional · control de acceso [op.acc]. Técnicas de AD CS según la clasificación ESC1–ESC8 de SpecterOps.",
     "Backend en FastAPI y panel en React + TypeScript + Vite.",
@@ -137,7 +137,7 @@ const en: HelpContent = {
   steps: [
     {
       title: "Active Directory enumeration",
-      text: "The Kerberos, delegation, AD CS and SMB modules collect technical findings. In this version they return clearly flagged sample data.",
+      text: "Connect to an authorised domain (controller, username, and password or NT hash). The Kerberos, delegation, AD CS and SMB modules collect only the weak configuration they observe. With no connection there are no alerts.",
       go: "panel",
     },
     {
@@ -166,8 +166,8 @@ const en: HelpContent = {
       text: "Set by the mapping rule according to impact: a direct path to domain admin is Critical; a crackable credential, High.",
     },
     {
-      title: "Sample data",
-      text: "While the demo banner is visible, no data comes from a real domain. This version performs no network scanning.",
+      title: "Authorisation",
+      text: "Before connecting you must confirm in writing that the owner authorises the enumeration. The password and hash are not stored on disk or in the repository.",
     },
   ],
   glossary: [
@@ -195,7 +195,7 @@ const en: HelpContent = {
     ["op.acc.7 · Remote login", "Protection of access over the network: encrypted, signed and authenticated channels."],
   ],
   faq: [
-    ["Does the tool scan my domain?", "Not in this version. The enumeration modules return sample data flagged as demo. A real scan requires express written authorisation."],
+    ["Does the tool scan my domain?", "Only if you provide a domain controller, a username and a password or NT hash, and confirm you have written authorisation. GET /api/scan with no credentials returns zero alerts. Enumeration is read-only: tickets are not roasted and templates are not exploited."],
     ["Why does one alert affect several op.acc controls?", "A single weakness often breaks several safeguards. ESC8, for example, affects the authentication mechanism (op.acc.5), remote login (op.acc.7) and rights management (op.acc.4). The control flagged as primary is the one directly breached."],
     ["How is the risk level decided?", "The mapping rule for each finding type sets it by impact: direct paths to domain admin are Critical, crackable credentials are High."],
     ["Can I filter findings?", "Yes. Click a severity card to filter by risk, or a control in the ENS controls table to see only its alerts. Active filters appear above the list."],
@@ -203,7 +203,7 @@ const en: HelpContent = {
     ["Where are my preferences stored?", "In this browser's localStorage: theme, accent, language and density. They are not sent to the backend."],
   ],
   about: [
-    "ENS AD Auditor 0.1.0. Active Directory auditor mapped to the ENS (Spain's National Security Framework).",
+    "ENS AD Auditor 0.2.0. Active Directory auditor mapped to the ENS (Spain's National Security Framework).",
     "Author: Yoandy Ramírez Delgado.",
     "Reference framework: Royal Decree 311/2022 (ENS), operational framework · access control [op.acc]. AD CS techniques follow SpecterOps' ESC1–ESC8 taxonomy.",
     "FastAPI backend and React + TypeScript + Vite dashboard.",

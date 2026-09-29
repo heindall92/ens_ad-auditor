@@ -42,12 +42,24 @@ export interface GRCAlert {
 export interface ScanResponse {
   generated_at: string;
   is_sample: boolean;
+  scanned: boolean;
   total_alerts: number;
   counts_by_risk: Record<RiskLevel, number>;
   alerts: GRCAlert[];
+  domain: string | null;
+  dc_host: string | null;
+  errors: string[];
 }
 
-// GET /api/controls: catálogo de controles ENS de la familia [op.acc].
+export interface AuditRequest {
+  domain: string;
+  dc_host: string;
+  username: string;
+  password?: string;
+  nthash?: string;
+  authorized: boolean;
+}
+
 export interface ControlsCatalog {
   family: string;
   controls: Record<string, string>;

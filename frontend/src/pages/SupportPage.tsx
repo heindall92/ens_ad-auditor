@@ -7,7 +7,7 @@ import PageHead from "./PageHead";
 
 // Public project link; override at build time with VITE_REPO_URL.
 const REPO_URL: string = import.meta.env.VITE_REPO_URL ?? "https://github.com/heindall92/ens_ad-auditor";
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
 type Category = "bug" | "mapping" | "idea";
 const CATEGORIES: [Category, TKey][] = [

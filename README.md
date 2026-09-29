@@ -20,7 +20,7 @@
 
 **ENS AD Auditor** revisa la configuración de un dominio de Active Directory (Kerberos, delegación, AD CS y firma SMB) y traduce cada hallazgo a un incumplimiento de los controles de acceso del Esquema Nacional de Seguridad, familia **`[op.acc]`**, con nivel de riesgo, descripción y remediación.
 
-La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a un dominio autorizado no hay alertas. Esta versión todavía no enumera en vivo: los módulos devuelven datos de muestra marcados (`is_sample: true`) y el panel lo dice.
+La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a un dominio autorizado no hay alertas: `GET /api/scan` devuelve una lista vacía e `is_sample: false`.
 
 ---
 
@@ -41,7 +41,7 @@ La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a u
 
 ## Cómo funciona
 
-1. **Se enumeran cuatro superficies.** Kerberos (Kerberoasting y AS-REP roasting), delegación (no restringida, restringida y RBCD), AD CS (ESC1–ESC8) y firma de mensajes SMB.
+1. **Se enumeran cuatro superficies**, contra un dominio autorizado. Kerberos (cuentas con SPN y sin preautenticación), delegación (no restringida, restringida y RBCD), AD CS (ESC1–ESC8) y firma de mensajes SMB.
 2. **El motor de mapeo decide el control.** Cada tipo de hallazgo pasa a uno o varios controles `[op.acc]`, con un control principal, un nivel de riesgo (Crítico, Alto, Medio o Bajo) y la remediación.
 3. **El panel lo muestra como trabajo de auditoría.** KPIs, filtros por severidad y por control, detalle técnico y descarga del informe en Markdown o JSON.
 
@@ -64,7 +64,7 @@ flowchart LR
 | `backend` | API FastAPI, mapeo ENS e informe | `8000` |
 | `frontend` | Panel React + TypeScript (Vite) | `5173` |
 
-La enumeración en vivo (LDAP, Kerberos, AD CS y SMB) está prevista con `ldap3`, `impacket` y `certipy-ad`. Hoy esos módulos son stubs y no abren conexión.
+La enumeración en vivo usa `ldap3` (LDAP), `impacket` (firma SMB) y `certipy-ad` (`find`, solo lectura). Las credenciales se envían en `POST /api/audit` y no se escriben en disco ni en el repositorio.
 
 ### Motor de mapeo
 
@@ -85,6 +85,7 @@ Controles de referencia: `op.acc.1` identificación · `op.acc.2` requisitos de 
 
 | Sección | Qué resuelve |
 |---|---|
+| **Conexión** | Dominio, DC, usuario y contraseña o hash NT. Exige confirmar autorización por escrito. El secreto no se guarda. |
 | **Panel** | Alertas totales, críticas, altas y controles `[op.acc]` afectados. |
 | **Hallazgos** | Lista por riesgo, con evidencia, incumplimiento y remediación. |
 | **Controles ENS** | Los siete `op.acc`, cuántas alertas toca cada uno y cuál es el principal. |
@@ -101,7 +102,7 @@ Las preferencias se guardan en el `localStorage` de este navegador. No se envía
 
 <p align="center">
   <img src="docs/img/readme/panel.png" alt="Panel de escritorio" width="880"/>
-  <br/><sub><b>Panel</b> · conformidad, severidad y hallazgos. La captura muestra datos de muestra, marcados como demostración.</sub>
+  <br/><sub><b>Panel</b> · conformidad, severidad y hallazgos. La captura es de una versión anterior del interfaz; esta versión no muestra hallazgos sin enumerar un dominio autorizado.</sub>
 </p>
 
 <p align="center">
@@ -140,20 +141,25 @@ El panel queda en `http://localhost:5173` y hace de proxy de `/api` hacia `http:
 | Servicio | Dirección |
 |---|---|
 | Panel | `http://localhost:5173` |
-| API | `http://127.0.0.1:8000/api/scan` |
-| Informe | `http://127.0.0.1:8000/api/report` |
+| API (vacío, sin credenciales) | `GET http://127.0.0.1:8000/api/scan` |
+| Auditoría en vivo | `POST http://127.0.0.1:8000/api/audit` |
+| Informe | `GET` o `POST http://127.0.0.1:8000/api/report` |
 
-Otros endpoints: `GET /api/report.json` · `GET /api/controls` · `GET /api/mapping` · `GET /api/health`.
+Otros endpoints: `GET|POST /api/report.json` · `GET /api/controls` · `GET /api/mapping` · `GET /api/health`.
+
+El cuerpo de `POST /api/audit` es JSON: `domain`, `dc_host`, `username`, `password` o `nthash`, y `authorized: true`. Sin `authorized` la API rechaza la petición. El secreto no se registra.
 
 ## Aviso
 
 Solo para auditorías y pentests autorizados. Enumerar un Active Directory exige autorización expresa por escrito del propietario. El uso no autorizado es ilegal.
 
-Mientras el banner de demostración esté visible, ningún dato procede de un dominio real.
+La enumeración es de solo lectura: Kerberos (cuentas con SPN y sin preautenticación), delegación, plantillas AD CS ESC1–ESC8 y firma SMB. No incluye explotación, relay ni solicitud de tickets.
 
 ## Limitaciones conocidas
 
-- **Enumeración en stub.** `backend/app/enumeration/` devuelve hallazgos de muestra. No hay formulario de conexión todavía (dominio, DC, usuario y contraseña o hash). Hasta que exista, no se abre ninguna sesión contra un dominio.
+- **Sin credenciales, sin hallazgos.** `GET /api/scan` y `GET /api/report` no inventan datos: lista vacía e `is_sample: false`.
+- **Credenciales en la petición.** Dominio, DC, usuario y contraseña o hash NT se envían a `POST /api/audit`. No se guardan en disco, en `localStorage` ni en el repositorio.
+- **Alcance de la enumeración.** LDAP (Kerberos y delegación), Certipy `find` (AD CS, sin pedir certificados) e Impacket (firma SMB en el DC y hasta 48 equipos con `dNSHostName`). Un dominio grande puede dejar equipos sin comprobar en SMB.
 - **Informe en español.** El selector ES/EN cambia la interfaz. Los textos de las alertas y del informe los genera el backend en español, el idioma del ENS.
 - **Sin dominio de prueba en este repositorio.** No hay cifras de un escaneo real porque no se ha auditado ningún dominio desde aquí.
 
@@ -169,8 +175,8 @@ ens_ad-auditor/
 │   └── api/                      Cliente de la API
 │
 ├── backend/app/                  API FastAPI
-│   ├── main.py                   Endpoints
-│   ├── enumeration/              Kerberos, delegación, AD CS, SMB (stubs)
+│   ├── main.py                   Endpoints (scan vacío, audit en vivo)
+│   ├── enumeration/              Kerberos, delegación, AD CS, SMB (ldap3, impacket, certipy-ad)
 │   ├── mapping/ens_mapping.py    Motor ENS [op.acc]
 │   └── report.py                 Informe Markdown y JSON
 │

@@ -289,7 +289,7 @@ pre.code { max-width: 100%; font: .78rem/1.55 var(--f-mono); background: var(--s
 .scrim { display: none; }
 
 /* ============ Formularios y controles (portado de la referencia) ============ */
-input[type="text"], input[type="number"], input[type="date"], input[type="search"], select, textarea {
+input[type="text"], input[type="number"], input[type="date"], input[type="search"], input[type="password"], select, textarea {
   height: 36px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 9px; padding: 0 10px; min-width: 0; max-width: 100%; font-size: .88rem; transition: border-color .12s, box-shadow .12s; }
 textarea { height: auto; min-height: 76px; padding: 8px 10px; resize: vertical; line-height: 1.5; width: 100%; }
 textarea.tall { min-height: 110px; }
@@ -884,3 +884,10 @@ body::before {
 :root[data-transparency="reduce"] .sev-card.high.on { background: var(--high-soft); }
 :root[data-transparency="reduce"] .sev-card.warn.on { background: var(--warn-soft); }
 :root[data-transparency="reduce"] .sev-card.accent.on { background: var(--accent-soft); }
+
+.connect-card { margin-bottom: var(--gap); }
+.connect-card .connect-legal { margin: 12px 0 16px; }
+.connect-card .form-grid { margin-top: 4px; }
+.connect-legal p { margin: 4px 0 0; font-size: .84rem; }
+.err-list { margin: 6px 0 0; padding-left: 1.1em; font-size: .84rem; }
+.err-list li { margin: 2px 0; }

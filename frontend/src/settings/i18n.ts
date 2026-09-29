@@ -52,9 +52,33 @@ const es = {
   "dash.lead":
     "Alertas GRC del escaneo de Active Directory, ligadas a los controles de acceso del ENS.",
   "dash.generated": "Generado: {date}",
+  "conn.title": "Conexión al dominio",
+  "conn.lead":
+    "Enumeración de solo lectura: Kerberos, delegación, AD CS (ESC1–ESC8) y firma SMB. No se explotan las debilidades.",
+  "conn.legalBold": "Autorización por escrito.",
+  "conn.legalText":
+    "Conectar a un Active Directory exige autorización expresa del propietario. El uso no autorizado es ilegal. La contraseña y el hash no se guardan en disco ni en el repositorio.",
+  "conn.domain": "Dominio",
+  "conn.domainPh": "FQDN del dominio",
+  "conn.dc": "Controlador de dominio",
+  "conn.dcPh": "Nombre o dirección IP",
+  "conn.user": "Usuario",
+  "conn.userPh": "sAMAccountName o UPN",
+  "conn.secret": "Secreto",
+  "conn.password": "Contraseña",
+  "conn.nthash": "Hash NT",
+  "conn.nthashPh": "32 caracteres hexadecimales",
+  "conn.authRequired": "Confirmo que tengo autorización expresa por escrito para enumerar este dominio.",
+  "conn.submit": "Conectar y enumerar",
+  "conn.scanning": "Enumerando…",
+  "conn.connected": "Conectado",
+  "conn.change": "Cambiar conexión",
+  "conn.clear": "Cerrar sesión",
+  "conn.nosave": "El secreto viaja solo en esta petición. No se almacena.",
+  "conn.errors": "Módulos con aviso",
   "demo.bold": "Datos de demostración.",
   "demo.text":
-    "Los módulos de enumeración devuelven hallazgos de muestra. No se ha escaneado ninguna red. Un escaneo real solo con autorización por escrito.",
+    "Este resultado está marcado como muestra. Un escaneo real solo con autorización por escrito.",
   "common.retry": "Reintentar",
   "common.unknownError": "Error desconocido",
   "loading.title": "Cargando alertas GRC…",
@@ -77,6 +101,12 @@ const es = {
   "findings.clearControl": "Quitar filtro de control",
   "findings.emptyTitle": "Sin hallazgos",
   "findings.emptyText": "No hay alertas GRC que coincidan con el filtro seleccionado.",
+  "findings.noScanTitle": "Sin enumeración",
+  "findings.noScanText":
+    "Indica un dominio autorizado, un controlador y credenciales. Sin conexión no hay alertas.",
+  "findings.cleanTitle": "Sin debilidades observadas",
+  "findings.cleanText":
+    "La enumeración no ha devuelto configuraciones débiles en Kerberos, delegación, AD CS ni firma SMB.",
   "findings.clearFilters": "Quitar filtros",
   "controls.title": "Controles ENS [op.acc]",
   "controls.hint":
@@ -215,7 +245,7 @@ const es = {
   "sup.repo": "Repositorio del proyecto",
   "sup.repoDesc": "Código fuente, incidencias y documentación.",
   "sup.api": "API del backend",
-  "sup.apiDesc": "Endpoints: /api/scan · /api/report · /api/controls",
+  "sup.apiDesc": "Endpoints: /api/scan · /api/audit · /api/report · /api/controls",
   "sup.status": "Estado del servicio",
   "sup.online": "Backend conectado",
   "sup.offline": "Backend sin conexión",
@@ -225,7 +255,7 @@ const es = {
   "sup.legalText":
     "Esta herramienta se distribuye exclusivamente para auditorías y pentests autorizados. Ejecutar enumeración contra un entorno de Active Directory requiere autorización expresa por escrito del propietario del sistema. El uso no autorizado es ilegal.",
   "sup.legalDemo":
-    "La versión actual no realiza ningún escaneo en red: los módulos de enumeración devuelven datos de muestra.",
+    "Sin credenciales la API no inventa hallazgos. La enumeración en vivo es de solo lectura y exige el acuse de autorización por escrito.",
 
   // Profile
   "pf.eyebrow": "Cuenta",
@@ -252,9 +282,9 @@ const es = {
   // Splash
   "splash.sub": "Auditoría de Active Directory · ENS [op.acc]",
   "splash.loading": "Cargando el panel de conformidad",
-  "splash.s1": "Enumerando Active Directory…",
-  "splash.s2": "Aplicando el motor de mapeo ENS…",
-  "splash.s3": "Generando alertas GRC…",
+  "splash.s1": "Cargando el panel…",
+  "splash.s2": "Cargando el motor de mapeo ENS…",
+  "splash.s3": "Preparando alertas GRC…",
   "splash.s4": "Preparando el informe…",
 } as const;
 
@@ -305,9 +335,33 @@ const en: Record<TKey, string> = {
   "dash.lead":
     "GRC alerts from the Active Directory scan, mapped to ENS access controls.",
   "dash.generated": "Generated: {date}",
+  "conn.title": "Domain connection",
+  "conn.lead":
+    "Read-only enumeration: Kerberos, delegation, AD CS (ESC1–ESC8) and SMB signing. Weaknesses are not exploited.",
+  "conn.legalBold": "Written authorisation.",
+  "conn.legalText":
+    "Connecting to Active Directory requires express authorisation from the owner. Unauthorised use is illegal. The password and hash are not stored on disk or in the repository.",
+  "conn.domain": "Domain",
+  "conn.domainPh": "Domain FQDN",
+  "conn.dc": "Domain controller",
+  "conn.dcPh": "Hostname or IP address",
+  "conn.user": "Username",
+  "conn.userPh": "sAMAccountName or UPN",
+  "conn.secret": "Secret",
+  "conn.password": "Password",
+  "conn.nthash": "NT hash",
+  "conn.nthashPh": "32 hexadecimal characters",
+  "conn.authRequired": "I confirm I have express written authorisation to enumerate this domain.",
+  "conn.submit": "Connect and enumerate",
+  "conn.scanning": "Enumerating…",
+  "conn.connected": "Connected",
+  "conn.change": "Change connection",
+  "conn.clear": "Sign out",
+  "conn.nosave": "The secret is sent only with this request. It is not stored.",
+  "conn.errors": "Module warnings",
   "demo.bold": "Demo data.",
   "demo.text":
-    "The enumeration modules return sample findings. No network has been scanned. Run a real scan only with written authorisation.",
+    "This result is flagged as sample data. Run a real scan only with written authorisation.",
   "common.retry": "Retry",
   "common.unknownError": "Unknown error",
   "loading.title": "Loading GRC alerts…",
@@ -330,6 +384,12 @@ const en: Record<TKey, string> = {
   "findings.clearControl": "Clear control filter",
   "findings.emptyTitle": "No findings",
   "findings.emptyText": "No GRC alerts match the selected filter.",
+  "findings.noScanTitle": "No enumeration",
+  "findings.noScanText":
+    "Enter an authorised domain, a domain controller and credentials. With no connection there are no alerts.",
+  "findings.cleanTitle": "No weaknesses observed",
+  "findings.cleanText":
+    "Enumeration returned no weak Kerberos, delegation, AD CS or SMB signing configuration.",
   "findings.clearFilters": "Clear filters",
   "controls.title": "ENS [op.acc] controls",
   "controls.hint": "Operational framework · access control. Click a control to filter findings.",
@@ -458,7 +518,7 @@ const en: Record<TKey, string> = {
   "sup.repo": "Project repository",
   "sup.repoDesc": "Source code, issues and documentation.",
   "sup.api": "Backend API",
-  "sup.apiDesc": "Endpoints: /api/scan · /api/report · /api/controls",
+  "sup.apiDesc": "Endpoints: /api/scan · /api/audit · /api/report · /api/controls",
   "sup.status": "Service status",
   "sup.online": "Backend connected",
   "sup.offline": "Backend offline",
@@ -467,7 +527,8 @@ const en: Record<TKey, string> = {
   "sup.legalTitle": "Authorised use notice",
   "sup.legalText":
     "This tool is distributed exclusively for authorised audits and penetration tests. Running enumeration against an Active Directory environment requires express written authorisation from the system owner. Unauthorised use is illegal.",
-  "sup.legalDemo": "The current version performs no network scanning: the enumeration modules return sample data.",
+  "sup.legalDemo":
+    "With no credentials the API invents no findings. Live enumeration is read-only and requires acknowledgement of written authorisation.",
 
   "pf.eyebrow": "Account",
   "pf.title": "User panel",
@@ -492,9 +553,9 @@ const en: Record<TKey, string> = {
 
   "splash.sub": "Active Directory audit · ENS [op.acc]",
   "splash.loading": "Loading the compliance dashboard",
-  "splash.s1": "Enumerating Active Directory…",
-  "splash.s2": "Running the ENS mapping engine…",
-  "splash.s3": "Generating GRC alerts…",
+  "splash.s1": "Loading the dashboard…",
+  "splash.s2": "Loading the ENS mapping engine…",
+  "splash.s3": "Preparing GRC alerts…",
   "splash.s4": "Preparing the report…",
 };
 

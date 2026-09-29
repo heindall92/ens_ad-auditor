@@ -4,7 +4,7 @@ Report generation: build JSON and Markdown reports from a list of GRCAlerts.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from app.models import GRCAlert, RiskLevel
 
@@ -19,18 +19,31 @@ def counts_by_risk(alerts: List[GRCAlert]) -> Dict[str, int]:
     return counts
 
 
-def build_json_report(alerts: List[GRCAlert], is_sample: bool = True) -> dict:
+def build_json_report(
+    alerts: List[GRCAlert],
+    is_sample: bool = False,
+    domain: Optional[str] = None,
+    errors: Optional[List[str]] = None,
+) -> dict:
     """Return a JSON-serialisable report dict."""
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "is_sample": is_sample,
+        "scanned": domain is not None,
+        "domain": domain,
         "total_alerts": len(alerts),
         "counts_by_risk": counts_by_risk(alerts),
+        "errors": list(errors or []),
         "alerts": [a.model_dump() for a in alerts],
     }
 
 
-def build_markdown_report(alerts: List[GRCAlert], is_sample: bool = True) -> str:
+def build_markdown_report(
+    alerts: List[GRCAlert],
+    is_sample: bool = False,
+    domain: Optional[str] = None,
+    errors: Optional[List[str]] = None,
+) -> str:
     """Return a Markdown report (Spanish, user-facing)."""
     generated = datetime.now(timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M %Z")
     counts = counts_by_risk(alerts)
@@ -38,14 +51,22 @@ def build_markdown_report(alerts: List[GRCAlert], is_sample: bool = True) -> str
     lines: List[str] = []
     lines.append("# Informe GRC — ENS AD Auditor")
     lines.append("")
-    lines.append("Auditoría de Active Directory mapeada al **ENS** (Esquema "
-                 "Nacional de Seguridad), familia de control de acceso **[op.acc]**.")
+    lines.append(
+        "Auditoría de Active Directory mapeada al **ENS** (Esquema "
+        "Nacional de Seguridad), familia de control de acceso **[op.acc]**."
+    )
     lines.append("")
     if is_sample:
-        lines.append("> ⚠️ **DATOS DE DEMOSTRACIÓN.** Este informe se ha generado "
-                     "con hallazgos de muestra, no con un escaneo real.")
+        lines.append(
+            "> **DATOS DE DEMOSTRACIÓN.** Este informe se ha generado "
+            "con hallazgos de muestra, no con un escaneo real."
+        )
         lines.append("")
     lines.append(f"- **Fecha de generación:** {generated}")
+    if domain:
+        lines.append(f"- **Dominio:** `{domain}`")
+    else:
+        lines.append("- **Dominio:** no conectado")
     lines.append(f"- **Total de alertas:** {len(alerts)}")
     lines.append(
         "- **Distribución por riesgo:** "
@@ -54,7 +75,32 @@ def build_markdown_report(alerts: List[GRCAlert], is_sample: bool = True) -> str
     )
     lines.append("")
 
-    # Group by risk in severity order.
+    if errors:
+        lines.append("## Avisos de enumeración")
+        lines.append("")
+        for err in errors:
+            lines.append(f"- {err}")
+        lines.append("")
+
+    if not alerts:
+        if domain:
+            lines.append(
+                "La enumeración no ha devuelto debilidades de configuración "
+                "en Kerberos, delegación, AD CS ni firma SMB."
+            )
+        else:
+            lines.append(
+                "Sin alertas. No se ha enumerado ningún dominio: hace falta "
+                "conectar con autorización expresa por escrito."
+            )
+        lines.append("")
+        lines.append("---")
+        lines.append(
+            "*Generado por ENS AD Auditor. Uso exclusivo para auditorías "
+            "autorizadas.*"
+        )
+        return "\n".join(lines)
+
     for risk in RISK_ORDER:
         group = [a for a in alerts if a.risk == risk]
         if not group:
@@ -81,6 +127,8 @@ def build_markdown_report(alerts: List[GRCAlert], is_sample: bool = True) -> str
             lines.append("")
 
     lines.append("---")
-    lines.append("*Generado por ENS AD Auditor. Uso exclusivo para auditorías "
-                 "autorizadas.*")
+    lines.append(
+        "*Generado por ENS AD Auditor. Uso exclusivo para auditorías "
+        "autorizadas.*"
+    )
     return "\n".join(lines)

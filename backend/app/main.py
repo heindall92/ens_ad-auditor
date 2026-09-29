@@ -1,54 +1,86 @@
 """
 ENS AD Auditor — FastAPI application.
 
-Pipeline: enumeration stubs -> ENS mapping engine -> GRC alerts / report.
+Pipeline: live enumeration (when credentials are posted) -> ENS mapping -> GRC alerts.
 
 Endpoints
 ---------
-GET /                 -> service metadata.
-GET /api/health       -> health check.
-GET /api/controls     -> ENS [op.acc] control catalogue used by the engine.
-GET /api/mapping      -> full data-driven mapping knowledge base (rules).
-GET /api/scan         -> run stub enumerators, map to ENS, return GRCAlerts.
-GET /api/report       -> Markdown GRC report (Content-Type text/markdown).
-GET /api/report.json  -> full JSON report.
+GET  /                 -> service metadata.
+GET  /api/health       -> health check.
+GET  /api/controls     -> ENS [op.acc] control catalogue used by the engine.
+GET  /api/mapping      -> full data-driven mapping knowledge base (rules).
+GET  /api/scan         -> empty result (no credentials: no findings, is_sample false).
+POST /api/audit        -> live enumeration with credentials supplied in the body.
+GET  /api/report       -> Markdown report of the empty scan.
+POST /api/report       -> Markdown report of a live audit.
+GET  /api/report.json  -> JSON report of the empty scan.
+POST /api/report.json  -> JSON report of a live audit.
 
-NOTE: enumeration modules currently return SAMPLE data; no network scanning
-is performed. Real scans require explicit written authorization.
+Credentials are used only for the request and are never written to disk.
+Live enumeration is read-only (Kerberos/delegation/AD CS/SMB configuration).
 """
 from __future__ import annotations
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.enumeration import run_all
+from app.enumeration import AuditConnectionError, run_all
+from app.enumeration.target import AuditTarget
 from app.mapping import ENS_CONTROLS, export_rules, map_findings
-from app.models import ScanResponse
+from app.models import AuditRequest, ScanResponse
 from app.report import build_json_report, build_markdown_report, counts_by_risk
 
 app = FastAPI(
     title="ENS AD Auditor",
     description=(
         "Auditor de Active Directory mapeado al ENS (Esquema Nacional de "
-        "Seguridad). Traduce hallazgos técnicos a incumplimientos [op.acc]."
+        "Seguridad). Traduce hallazgos técnicos a incumplimientos [op.acc]. "
+        "Solo para auditorías con autorización expresa por escrito."
     ),
-    version="0.1.0",
+    version="0.2.0",
 )
 
-# CORS: allow the Vite dev server (localhost:5173) during development.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # scaffold: relax for local dev; tighten in prod.
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-def _run_pipeline():
-    """Run enumeration stubs and map findings to ENS GRC alerts."""
-    findings = run_all()
+def _empty_scan() -> ScanResponse:
+    return ScanResponse(
+        generated_at=build_json_report([], is_sample=False)["generated_at"],
+        is_sample=False,
+        scanned=False,
+        total_alerts=0,
+        counts_by_risk=counts_by_risk([]),
+        alerts=[],
+        domain=None,
+        dc_host=None,
+        errors=[],
+    )
+
+
+def _run_live(req: AuditRequest) -> ScanResponse:
+    target = AuditTarget.from_request(req)
+    try:
+        findings, errors = run_all(target)
+    except AuditConnectionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     alerts = map_findings(findings)
-    return findings, alerts
+    payload = build_json_report(alerts, is_sample=False, domain=target.domain)
+    return ScanResponse(
+        generated_at=payload["generated_at"],
+        is_sample=False,
+        scanned=True,
+        total_alerts=len(alerts),
+        counts_by_risk=counts_by_risk(alerts),
+        alerts=alerts,
+        domain=target.domain,
+        dc_host=target.dc_host,
+        errors=errors,
+    )
 
 
 @app.get("/")
@@ -62,12 +94,13 @@ def root():
             "/api/controls",
             "/api/mapping",
             "/api/scan",
+            "/api/audit",
             "/api/report",
             "/api/report.json",
         ],
         "warning": (
-            "Datos de demostración. Ejecutar escaneos reales solo con "
-            "autorización expresa por escrito."
+            "Solo auditorías autorizadas por escrito. Sin credenciales la API "
+            "no inventa hallazgos."
         ),
     }
 
@@ -91,30 +124,45 @@ def mapping():
 
 @app.get("/api/scan", response_model=ScanResponse)
 def scan():
-    """Run the stub enumerators and return ENS GRC alerts (sample data)."""
-    findings, alerts = _run_pipeline()
-    is_sample = any(f.is_sample for f in findings) if findings else True
-    return ScanResponse(
-        generated_at=build_json_report(alerts, is_sample)["generated_at"],
-        is_sample=is_sample,
-        total_alerts=len(alerts),
-        counts_by_risk=counts_by_risk(alerts),
-        alerts=alerts,
-    )
+    """No credentials: empty alert list, is_sample false."""
+    return _empty_scan()
+
+
+@app.post("/api/audit", response_model=ScanResponse)
+def audit(req: AuditRequest):
+    """Run live enumeration against the supplied domain controller."""
+    return _run_live(req)
 
 
 @app.get("/api/report", response_class=Response)
-def report_markdown():
-    """Return a Markdown GRC report."""
-    findings, alerts = _run_pipeline()
-    is_sample = any(f.is_sample for f in findings) if findings else True
-    md = build_markdown_report(alerts, is_sample)
+def report_markdown_empty():
+    md = build_markdown_report([], is_sample=False)
+    return Response(content=md, media_type="text/markdown; charset=utf-8")
+
+
+@app.post("/api/report", response_class=Response)
+def report_markdown_live(req: AuditRequest):
+    result = _run_live(req)
+    md = build_markdown_report(
+        result.alerts,
+        is_sample=False,
+        domain=result.domain,
+        errors=result.errors,
+    )
     return Response(content=md, media_type="text/markdown; charset=utf-8")
 
 
 @app.get("/api/report.json")
-def report_json():
-    """Return the full JSON report."""
-    findings, alerts = _run_pipeline()
-    is_sample = any(f.is_sample for f in findings) if findings else True
-    return build_json_report(alerts, is_sample)
+def report_json_empty():
+    return build_json_report([], is_sample=False)
+
+
+@app.post("/api/report.json")
+def report_json_live(req: AuditRequest):
+    result = _run_live(req)
+    return build_json_report(
+        result.alerts,
+        is_sample=False,
+        domain=result.domain,
+        errors=result.errors,
+    )
