@@ -174,7 +174,7 @@ La enumeración es de solo lectura: Kerberos (cuentas con SPN y sin preautentica
 
 ## Hoja de ruta
 
-Lo que está hecho y lo que queda está en [ROADMAP.md](ROADMAP.md). El panel no rellena huecos con datos ficticios: si una comprobación no está implementada, no aparece como hallazgo.
+El alcance (ahora / después) está en [ROADMAP.md](ROADMAP.md). Las filas de «Después» no se simulan.
 
 ## Estructura
 
@@ -195,7 +195,7 @@ ens_ad-auditor/
 │   └── report.py                 Informe Markdown y JSON
 │
 ├── backend/tests/                Pruebas del mapeo, MAGERIT, política y API
-├── ROADMAP.md                    Qué hay ahora y qué queda
+├── ROADMAP.md                    Roadmap de auditoría (ahora / después)
 ├── docs/img/readme/              Capturas de este README
 ├── frontend/public/intro.mp4     Intro de arranque (10 s)
 └── LICENSE                       GPLv2

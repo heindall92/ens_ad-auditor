@@ -23,6 +23,7 @@ STALE_DAYS = 90
 MIN_PWD_LENGTH = 12
 MIN_PWD_HISTORY = 5
 MAX_PWD_AGE_DAYS = 365
+DOMAIN_PASSWORD_COMPLEX = 0x1
 
 TRUST_ATTR_QUARANTINED = 0x4
 TRUST_ATTR_FOREST_TRANSITIVE = 0x8
@@ -145,6 +146,7 @@ def _password_and_lockout(session: LdapSession) -> List[Finding]:
     min_len = as_int(domain.get("minPwdLength"), default=-1)
     history = as_int(domain.get("pwdHistoryLength"), default=-1)
     max_age = _span_days(domain.get("maxPwdAge"))
+    pwd_props = domain.get("pwdProperties")
     pwd_issues = []
     if min_len >= 0 and min_len < MIN_PWD_LENGTH:
         pwd_issues.append(f"minPwdLength={min_len} (< {MIN_PWD_LENGTH})")
@@ -153,6 +155,10 @@ def _password_and_lockout(session: LdapSession) -> List[Finding]:
     if max_age is not None and (max_age == 0 or max_age > MAX_PWD_AGE_DAYS):
         label = "no caduca" if max_age == 0 else f"{max_age:.0f} días"
         pwd_issues.append(f"maxPwdAge={label}")
+    if pwd_props is not None:
+        flags = as_int(pwd_props)
+        if flags & DOMAIN_PASSWORD_COMPLEX == 0:
+            pwd_issues.append(f"pwdProperties={flags} (sin complejidad)")
     if pwd_issues:
         out.append(
             Finding(

@@ -80,3 +80,42 @@ def test_unsigned_ldap_session():
     kinds = {f.finding_type for f in policy._ldap_channel(session)}
     assert FindingType.LDAP_SIGNING_NOT_REQUIRED in kinds
     assert FindingType.LDAP_CHANNEL_BINDING_WEAK in kinds
+
+
+def test_password_complexity_only():
+    session = FakeSession(
+        tls=True,
+        by_dn={
+            "DC=lab,DC=test": {
+                "minPwdLength": 14,
+                "maxPwdAge": timedelta(days=90),
+                "pwdHistoryLength": 8,
+                "pwdProperties": 0,
+                "lockoutThreshold": 5,
+            }
+        },
+        rows={},
+    )
+    findings = policy.enumerate(session)
+    types = {f.finding_type for f in findings}
+    assert FindingType.WEAK_PASSWORD_POLICY in types
+    assert FindingType.WEAK_LOCKOUT_POLICY not in types
+    evidence = next(f.evidence or "" for f in findings if f.finding_type is FindingType.WEAK_PASSWORD_POLICY)
+    assert "sin complejidad" in evidence
+
+
+def test_password_complexity_set_is_clean():
+    session = FakeSession(
+        tls=True,
+        by_dn={
+            "DC=lab,DC=test": {
+                "minPwdLength": 14,
+                "maxPwdAge": timedelta(days=90),
+                "pwdHistoryLength": 8,
+                "pwdProperties": policy.DOMAIN_PASSWORD_COMPLEX,
+                "lockoutThreshold": 5,
+            }
+        },
+        rows={},
+    )
+    assert policy.enumerate(session) == []

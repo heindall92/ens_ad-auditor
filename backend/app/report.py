@@ -118,15 +118,15 @@ def build_markdown_report(
     if not alerts:
         if domain:
             lines.append(
-                "La enumeración no ha devuelto debilidades de configuración "
-                "en las comprobaciones en vivo (Kerberos, delegación, AD CS, "
-                "SMB, política de dominio, krbtgt, Protected Users, trusts, LAPS, "
-                "cuota de equipos, LDAP)."
+                "Comprobado y limpio: la enumeración autorizada no ha devuelto "
+                "debilidades en las comprobaciones en vivo (Kerberos, delegación, "
+                "AD CS, SMB, política de dominio, krbtgt, Protected Users, trusts, "
+                "LAPS, cuota de equipos, LDAP). No se han inventado hallazgos."
             )
         else:
             lines.append(
-                "Sin alertas. No se ha enumerado ningún dominio: hace falta "
-                "conectar con autorización expresa por escrito."
+                "No comprobado: no se ha enumerado ningún dominio. Hace falta "
+                "conectar con autorización expresa por escrito. La matriz está vacía."
             )
         lines.append("")
         lines.append("---")

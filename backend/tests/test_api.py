@@ -39,6 +39,9 @@ def test_report_without_credentials_is_empty_and_not_sample():
     assert "[demo]" not in text
     assert "demostración" not in text
     assert "datos de muestra" not in text
+    assert "no comprobado" in text
+    assert "comprobado y limpio" not in text
+    assert "matriz está vacía" in text
 
 
 def test_audit_requires_authorisation():
@@ -87,3 +90,12 @@ def test_mapping_exposes_magerit_factors():
         assert 1 <= rule["likelihood"] <= 5
         assert "da_path" in rule
         assert "magerit_risk" in rule
+
+
+def test_markdown_with_domain_and_no_alerts_is_checked_clean():
+    from app.report import build_markdown_report
+
+    md = build_markdown_report([], domain="lab.test").lower()
+    assert "comprobado y limpio" in md
+    assert "no se han inventado" in md
+    assert "no comprobado" not in md
