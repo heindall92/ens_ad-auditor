@@ -22,7 +22,7 @@ La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a u
 
 ---
 
-## Índice
+## <img src="docs/assets/icons/list.svg" width="20" height="20" valign="middle"/> Índice
 
 - [Cómo funciona](#cómo-funciona)
 - [Arquitectura](#arquitectura)
@@ -38,7 +38,7 @@ La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a u
 
 ---
 
-## Cómo funciona
+## <img src="docs/assets/icons/scan-search.svg" width="20" height="20" valign="middle"/> Cómo funciona
 
 1. **Se enumeran superficies de solo lectura**, contra un dominio autorizado. Kerberos (cuentas con SPN y sin preautenticación), delegación (no restringida, restringida y RBCD), AD CS (ESC1–ESC8), firma SMB, política de contraseñas y bloqueo, `krbtgt`, Protected Users, cuentas privilegiadas con SPN o inactivas, LDAP signing / channel binding, trusts y LAPS (solo esquema).
 2. **El motor de mapeo decide el control y la criticidad.** Cada tipo de hallazgo pasa a uno o varios controles `[op.acc]`, con un control principal. El nivel ENS (Crítico, Alto, Medio o Bajo) sale del producto MAGERIT impacto × probabilidad (1–5).
@@ -46,7 +46,7 @@ La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a u
 
 En vez de decir solo «SMB signing deshabilitado», la alerta dice, por ejemplo, riesgo Alto e incumplimiento del mecanismo de autenticación `[op.acc.5]`, con qué falla y cómo remediarlo.
 
-## Arquitectura
+## <img src="docs/assets/icons/layers.svg" width="20" height="20" valign="middle"/> Arquitectura
 
 ```mermaid
 flowchart LR
@@ -65,7 +65,7 @@ flowchart LR
 
 La enumeración en vivo usa `ldap3` (LDAP), `impacket` (firma SMB) y `certipy-ad` (`find`, solo lectura). Las credenciales se envían en `POST /api/audit` y no se escriben en disco ni en el repositorio.
 
-### Motor de mapeo
+### <img src="docs/assets/icons/shield-check.svg" width="20" height="20" valign="middle"/> Motor de mapeo
 
 `backend/app/mapping/ens_mapping.py` traduce cada tipo de hallazgo a los controles que le tocan. `backend/app/mapping/magerit.py` calcula el producto impacto × probabilidad y las bandas ENS. Está cubierto con `pytest`.
 
@@ -87,7 +87,7 @@ La enumeración en vivo usa `ldap3` (LDAP), `impacket` (firma SMB) y `certipy-ad
 
 Controles de referencia: `op.acc.1` identificación · `op.acc.2` requisitos de acceso · `op.acc.3` segregación de funciones · `op.acc.4` gestión de derechos · `op.acc.5` mecanismo de autenticación · `op.acc.6` acceso local · `op.acc.7` acceso remoto. Marco: Real Decreto 311/2022. Las técnicas de AD CS siguen la clasificación ESC1–ESC8 de SpecterOps.
 
-## Qué incluye
+## <img src="docs/assets/icons/list-checks.svg" width="20" height="20" valign="middle"/> Qué incluye
 
 | Sección | Qué resuelve |
 |---|---|
@@ -105,7 +105,7 @@ Controles de referencia: `op.acc.1` identificación · `op.acc.2` requisitos de 
 
 Las preferencias se guardan en el `localStorage` de este navegador. No se envían al backend.
 
-## Capturas
+## <img src="docs/assets/icons/image.svg" width="20" height="20" valign="middle"/> Capturas
 
 <p align="center">
   <img src="docs/img/readme/panel.png" alt="Panel de escritorio" width="880"/>
@@ -119,7 +119,7 @@ Las preferencias se guardan en el `localStorage` de este navegador. No se envía
   <br/><sub><b>Vista móvil</b> · barra inferior y hoja Más</sub>
 </p>
 
-## Arranque rápido
+## <img src="docs/assets/icons/rocket.svg" width="20" height="20" valign="middle"/> Arranque rápido
 
 **Requisitos:** Python 3.11 o superior, Node.js 20 o superior y npm.
 
@@ -156,13 +156,13 @@ Otros endpoints: `GET|POST /api/report.json` · `GET /api/controls` · `GET /api
 
 El cuerpo de `POST /api/audit` es JSON: `domain`, `dc_host`, `username`, `password` o `nthash`, y `authorized: true`. Sin `authorized` la API rechaza la petición. El secreto no se registra.
 
-## Aviso
+## <img src="docs/assets/icons/triangle-alert.svg" width="20" height="20" valign="middle"/> Aviso
 
 Solo para auditorías y pentests autorizados. Enumerar un Active Directory exige autorización expresa por escrito del propietario. El uso no autorizado es ilegal.
 
 La enumeración es de solo lectura: Kerberos (cuentas con SPN y sin preautenticación), delegación, plantillas AD CS ESC1–ESC8, firma SMB, política de dominio, `krbtgt`, Protected Users, LDAP, trusts y LAPS (esquema). No incluye explotación, relay, solicitud de tickets ni lectura de contraseñas LAPS.
 
-## Limitaciones conocidas
+## <img src="docs/assets/icons/info.svg" width="20" height="20" valign="middle"/> Limitaciones conocidas
 
 - **Sin credenciales, sin hallazgos.** `GET /api/scan` y `GET /api/report` no inventan datos: lista vacía e `is_sample: false`.
 - **Credenciales en la petición.** Dominio, DC, usuario y contraseña o hash NT se envían a `POST /api/audit`. No se guardan en disco, en `localStorage` ni en el repositorio.
@@ -172,11 +172,11 @@ La enumeración es de solo lectura: Kerberos (cuentas con SPN y sin preautentica
 - **Informe en español.** El selector ES/EN cambia la interfaz. Los textos de las alertas y del informe los genera el backend en español, el idioma del ENS.
 - **Sin dominio de prueba en este repositorio.** No hay cifras de un escaneo real porque no se ha auditado ningún dominio desde aquí.
 
-## Hoja de ruta
+## <img src="docs/assets/icons/map.svg" width="20" height="20" valign="middle"/> Hoja de ruta
 
 El alcance (ahora / después) está en [ROADMAP.md](ROADMAP.md). Las filas de «Después» no se simulan.
 
-## Estructura
+## <img src="docs/assets/icons/folder-tree.svg" width="20" height="20" valign="middle"/> Estructura
 
 ```
 ens_ad-auditor/
@@ -201,13 +201,13 @@ ens_ad-auditor/
 └── LICENSE                       GPLv2
 ```
 
-## Licencia
+## <img src="docs/assets/icons/scale.svg" width="20" height="20" valign="middle"/> Licencia
 
 Distribuido bajo licencia [GPLv2](LICENSE) · © 2026 Yoandy Ramírez Delgado.
 
-Componentes de terceros: FastAPI (MIT), React (MIT), Vite (MIT). Iconografía de la consola: [Lucide](https://lucide.dev) (ISC).
+Componentes de terceros: FastAPI (MIT), React (MIT), Vite (MIT). Iconografía de la consola y de este README: [Lucide](https://lucide.dev) (ISC).
 
-## Autor
+## <img src="docs/assets/icons/user.svg" width="20" height="20" valign="middle"/> Autor
 
 <table>
 <tr>
