@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Tuple
 
-from app.enumeration import adcs, delegation, kerberos, smb
+from app.enumeration import adcs, delegation, kerberos, policy, smb
 from app.enumeration.ldap_client import LdapSession, bind
 from app.enumeration.target import AuditConnectionError, AuditTarget
 from app.models import Finding
@@ -19,6 +19,7 @@ __all__ = [
     "delegation",
     "adcs",
     "smb",
+    "policy",
     "run_all",
     "AuditTarget",
     "AuditConnectionError",
@@ -30,7 +31,7 @@ def run_all(
 ) -> Tuple[List[Finding], List[str]]:
     """Run every enumeration module.
 
-    Without a target the result is empty (no sample data). Module failures are
+    Without a target the result is empty. Module failures are
     collected in the error list; successful modules still contribute findings.
     """
     if target is None:
@@ -62,6 +63,11 @@ def run_all(
             findings.extend(delegation.enumerate(session))
         except Exception as exc:
             errors.append(f"delegation: {exc}")
+
+        try:
+            findings.extend(policy.enumerate(session))
+        except Exception as exc:
+            errors.append(f"policy: {exc}")
 
         try:
             findings.extend(adcs.enumerate(target))

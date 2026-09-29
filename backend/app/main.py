@@ -9,7 +9,7 @@ GET  /                 -> service metadata.
 GET  /api/health       -> health check.
 GET  /api/controls     -> ENS [op.acc] control catalogue used by the engine.
 GET  /api/mapping      -> full data-driven mapping knowledge base (rules).
-GET  /api/scan         -> empty result (no credentials: no findings, is_sample false).
+GET  /api/scan         -> empty result (no credentials: no findings).
 POST /api/audit        -> live enumeration with credentials supplied in the body.
 GET  /api/report       -> Markdown report of the empty scan.
 POST /api/report       -> Markdown report of a live audit.
@@ -26,8 +26,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.enumeration import AuditConnectionError, run_all
 from app.enumeration.target import AuditTarget
-from app.mapping import ENS_CONTROLS, export_rules, map_findings
-from app.models import AuditRequest, ScanResponse
+from app.mapping import (
+    ENS_CONTROLS,
+    build_matrix,
+    build_summary,
+    export_rules,
+    map_findings,
+)
+from app.models import AuditRequest, DomainSummary, RiskMatrix, ScanResponse
 from app.report import build_json_report, build_markdown_report, counts_by_risk
 
 app = FastAPI(
@@ -59,6 +65,8 @@ def _empty_scan() -> ScanResponse:
         domain=None,
         dc_host=None,
         errors=[],
+        matrix=RiskMatrix(empty=True, cells=[]),
+        summary=DomainSummary(),
     )
 
 
@@ -69,7 +77,14 @@ def _run_live(req: AuditRequest) -> ScanResponse:
     except AuditConnectionError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     alerts = map_findings(findings)
-    payload = build_json_report(alerts, is_sample=False, domain=target.domain)
+    payload = build_json_report(
+        alerts,
+        is_sample=False,
+        domain=target.domain,
+        errors=errors,
+        matrix=build_matrix(alerts),
+        summary=build_summary(alerts),
+    )
     return ScanResponse(
         generated_at=payload["generated_at"],
         is_sample=False,
@@ -80,6 +95,8 @@ def _run_live(req: AuditRequest) -> ScanResponse:
         domain=target.domain,
         dc_host=target.dc_host,
         errors=errors,
+        matrix=build_matrix(alerts),
+        summary=build_summary(alerts),
     )
 
 
@@ -124,7 +141,7 @@ def mapping():
 
 @app.get("/api/scan", response_model=ScanResponse)
 def scan():
-    """No credentials: empty alert list, is_sample false."""
+    """No credentials: empty alert list. Never fabricates findings."""
     return _empty_scan()
 
 
@@ -148,6 +165,8 @@ def report_markdown_live(req: AuditRequest):
         is_sample=False,
         domain=result.domain,
         errors=result.errors,
+        matrix=result.matrix,
+        summary=result.summary,
     )
     return Response(content=md, media_type="text/markdown; charset=utf-8")
 
@@ -165,4 +184,6 @@ def report_json_live(req: AuditRequest):
         is_sample=False,
         domain=result.domain,
         errors=result.errors,
+        matrix=result.matrix,
+        summary=result.summary,
     )

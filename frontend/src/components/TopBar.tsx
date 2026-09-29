@@ -4,7 +4,6 @@ import { useSettings } from "../settings/SettingsContext";
 
 interface Props {
   current: string;
-  isSample: boolean;
   showActions: boolean;
   loading: boolean;
   downloading: boolean;
@@ -31,7 +30,6 @@ export default function TopBar(props: Props) {
         <span className="crumb-proj">ENS AD Auditor</span>
         <Icon name="chevronRight" size={14} className="muted" />
         <span className="crumb-cur">{props.current}</span>
-        {props.isSample && <span className="badge accent">{t("top.demo")}</span>}
       </nav>
       <div className="top-actions">
         {props.showActions && (

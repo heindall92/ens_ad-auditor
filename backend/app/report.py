@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from app.models import GRCAlert, RiskLevel
+from app.models import DomainSummary, GRCAlert, RiskLevel, RiskMatrix
 
 RISK_ORDER = [RiskLevel.CRITICO, RiskLevel.ALTO, RiskLevel.MEDIO, RiskLevel.BAJO]
 
@@ -21,11 +21,15 @@ def counts_by_risk(alerts: List[GRCAlert]) -> Dict[str, int]:
 
 def build_json_report(
     alerts: List[GRCAlert],
-    is_sample: bool = False,
+    is_sample: bool = False,  # kept in the payload as the "never fabricated" flag
     domain: Optional[str] = None,
     errors: Optional[List[str]] = None,
+    matrix: Optional[RiskMatrix] = None,
+    summary: Optional[DomainSummary] = None,
 ) -> dict:
     """Return a JSON-serialisable report dict."""
+    matrix = matrix or RiskMatrix(empty=True, cells=[])
+    summary = summary or DomainSummary()
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "is_sample": is_sample,
@@ -34,19 +38,25 @@ def build_json_report(
         "total_alerts": len(alerts),
         "counts_by_risk": counts_by_risk(alerts),
         "errors": list(errors or []),
+        "matrix": matrix.model_dump(),
+        "summary": summary.model_dump(),
         "alerts": [a.model_dump() for a in alerts],
     }
 
 
 def build_markdown_report(
     alerts: List[GRCAlert],
-    is_sample: bool = False,
+    is_sample: bool = False,  # unused: markdown never labels a result as sample
     domain: Optional[str] = None,
     errors: Optional[List[str]] = None,
+    matrix: Optional[RiskMatrix] = None,
+    summary: Optional[DomainSummary] = None,
 ) -> str:
     """Return a Markdown report (Spanish, user-facing)."""
     generated = datetime.now(timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M %Z")
     counts = counts_by_risk(alerts)
+    matrix = matrix or RiskMatrix(empty=True, cells=[])
+    summary = summary or DomainSummary()
 
     lines: List[str] = []
     lines.append("# Informe GRC — ENS AD Auditor")
@@ -56,12 +66,6 @@ def build_markdown_report(
         "Nacional de Seguridad), familia de control de acceso **[op.acc]**."
     )
     lines.append("")
-    if is_sample:
-        lines.append(
-            "> **DATOS DE DEMOSTRACIÓN.** Este informe se ha generado "
-            "con hallazgos de muestra, no con un escaneo real."
-        )
-        lines.append("")
     lines.append(f"- **Fecha de generación:** {generated}")
     if domain:
         lines.append(f"- **Dominio:** `{domain}`")
@@ -82,11 +86,42 @@ def build_markdown_report(
             lines.append(f"- {err}")
         lines.append("")
 
+    lines.append("## Resumen de criticidad")
+    lines.append("")
+    if not alerts:
+        lines.append("Sin hallazgos devueltos. La matriz MAGERIT está vacía.")
+        lines.append("")
+    else:
+        highest = summary.highest_risk.value if summary.highest_risk else "n/d"
+        lines.append(f"- **Riesgo más alto:** {highest}")
+        lines.append(f"- **Controles [op.acc] afectados:** {summary.controls_hit}")
+        lines.append(
+            f"- **Camino directo a Domain Admin:** "
+            f"{'sí' if summary.da_path else 'no'} ({summary.da_path_count} hallazgo(s))"
+        )
+        lines.append("")
+        lines.append("## Matriz MAGERIT (impacto × probabilidad)")
+        lines.append("")
+        if matrix.empty:
+            lines.append("Matriz vacía.")
+        else:
+            lines.append("| Impacto | Probabilidad | Score | Riesgo ENS | Hallazgos |")
+            lines.append("|---|---|---|---|---|")
+            for cell in matrix.cells:
+                product = cell.impact * cell.likelihood
+                lines.append(
+                    f"| {cell.impact} | {cell.likelihood} | {product} | "
+                    f"{cell.risk.value} | {cell.count} |"
+                )
+        lines.append("")
+
     if not alerts:
         if domain:
             lines.append(
                 "La enumeración no ha devuelto debilidades de configuración "
-                "en Kerberos, delegación, AD CS ni firma SMB."
+                "en las comprobaciones en vivo (Kerberos, delegación, AD CS, "
+                "SMB, política de dominio, krbtgt, Protected Users, trusts, LAPS, "
+                "cuota de equipos, LDAP)."
             )
         else:
             lines.append(
@@ -116,6 +151,12 @@ def build_markdown_report(
             lines.append("")
             lines.append(f"- **Objetivo:** {a.finding.target}")
             lines.append(f"- **Módulo:** `{a.finding.source_module}`")
+            lines.append(
+                f"- **Criticidad MAGERIT:** impacto {a.impact} × "
+                f"probabilidad {a.likelihood} = {a.score} → {a.risk.value}"
+            )
+            if a.da_path:
+                lines.append("- **Camino a Domain Admin:** sí")
             lines.append(f"- **Hallazgo técnico:** {a.finding.detail}")
             lines.append(f"- **Control(es) ENS [op.acc]:** {controls}")
             lines.append(f"- **Incumplimiento:** {a.non_compliance}")

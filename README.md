@@ -16,9 +16,9 @@
   <img src="docs/img/readme/panel.png" alt="Panel de conformidad de ENS AD Auditor" width="880"/>
 </p>
 
-**ENS AD Auditor** revisa la configuración de un dominio de Active Directory (Kerberos, delegación, AD CS y firma SMB) y traduce cada hallazgo a un incumplimiento de los controles de acceso del Esquema Nacional de Seguridad, familia **`[op.acc]`**, con nivel de riesgo, descripción y remediación.
+**ENS AD Auditor** revisa la configuración de un dominio de Active Directory (Kerberos, delegación, AD CS, firma SMB, política de dominio, LDAP, trusts y LAPS) y traduce cada hallazgo a un incumplimiento de los controles de acceso del Esquema Nacional de Seguridad, familia **`[op.acc]`**, con criticidad MAGERIT, descripción y remediación.
 
-La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a un dominio autorizado no hay alertas: `GET /api/scan` devuelve una lista vacía e `is_sample: false`.
+La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a un dominio autorizado no hay alertas: `GET /api/scan` devuelve una lista vacía e `is_sample: false`. No hay escaneo sin autorización por escrito y credenciales reales.
 
 ---
 
@@ -31,6 +31,7 @@ La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a u
 - [Arranque rápido](#arranque-rápido)
 - [Aviso](#aviso)
 - [Limitaciones conocidas](#limitaciones-conocidas)
+- [Hoja de ruta](#hoja-de-ruta)
 - [Estructura](#estructura)
 - [Licencia](#licencia)
 - [Autor](#autor)
@@ -39,9 +40,9 @@ La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a u
 
 ## Cómo funciona
 
-1. **Se enumeran cuatro superficies**, contra un dominio autorizado. Kerberos (cuentas con SPN y sin preautenticación), delegación (no restringida, restringida y RBCD), AD CS (ESC1–ESC8) y firma de mensajes SMB.
-2. **El motor de mapeo decide el control.** Cada tipo de hallazgo pasa a uno o varios controles `[op.acc]`, con un control principal, un nivel de riesgo (Crítico, Alto, Medio o Bajo) y la remediación.
-3. **El panel lo muestra como trabajo de auditoría.** KPIs, filtros por severidad y por control, detalle técnico y descarga del informe en Markdown o JSON.
+1. **Se enumeran superficies de solo lectura**, contra un dominio autorizado. Kerberos (cuentas con SPN y sin preautenticación), delegación (no restringida, restringida y RBCD), AD CS (ESC1–ESC8), firma SMB, política de contraseñas y bloqueo, `krbtgt`, Protected Users, cuentas privilegiadas con SPN o inactivas, LDAP signing / channel binding, trusts y LAPS (solo esquema).
+2. **El motor de mapeo decide el control y la criticidad.** Cada tipo de hallazgo pasa a uno o varios controles `[op.acc]`, con un control principal. El nivel ENS (Crítico, Alto, Medio o Bajo) sale del producto MAGERIT impacto × probabilidad (1–5).
+3. **El panel lo muestra como trabajo de auditoría.** KPIs, matriz MAGERIT, resumen de criticidad, filtros por severidad y por control, detalle técnico y descarga del informe en Markdown o JSON.
 
 En vez de decir solo «SMB signing deshabilitado», la alerta dice, por ejemplo, riesgo Alto e incumplimiento del mecanismo de autenticación `[op.acc.5]`, con qué falla y cómo remediarlo.
 
@@ -49,9 +50,9 @@ En vez de decir solo «SMB signing deshabilitado», la alerta dice, por ejemplo,
 
 ```mermaid
 flowchart LR
-    D[Dominio AD<br/>autorizado] --> E[Enumeración<br/>Kerberos · delegación · AD CS · SMB]
-    E --> M[Motor de mapeo<br/>ENS op.acc]
-    M --> A[Alertas GRC<br/>riesgo · incumplimiento · remediación]
+    D[Dominio AD<br/>autorizado] --> E[Enumeración<br/>Kerberos · delegación · AD CS · SMB · política]
+    E --> M[Motor ENS op.acc<br/>+ MAGERIT]
+    M --> A[Alertas GRC<br/>criticidad · incumplimiento · remediación]
     A --> B[API FastAPI]
     B --> F[Panel React]
     F --> U((Auditor))
@@ -66,7 +67,7 @@ La enumeración en vivo usa `ldap3` (LDAP), `impacket` (firma SMB) y `certipy-ad
 
 ### Motor de mapeo
 
-`backend/app/mapping/ens_mapping.py` traduce cada tipo de hallazgo a los controles que le tocan. Está cubierto con `pytest`.
+`backend/app/mapping/ens_mapping.py` traduce cada tipo de hallazgo a los controles que le tocan. `backend/app/mapping/magerit.py` calcula el producto impacto × probabilidad y las bandas ENS. Está cubierto con `pytest`.
 
 | Hallazgo técnico | Control ENS principal |
 |---|---|
@@ -76,6 +77,13 @@ La enumeración en vivo usa `ldap3` (LDAP), `impacket` (firma SMB) y `certipy-ad
 | Delegación no restringida, restringida o RBCD | `op.acc.4` |
 | Privilegios excesivos | `op.acc.2` / `op.acc.4` |
 | AD CS ESC1–ESC8 | `op.acc.5` / `op.acc.4` |
+| Política de contraseñas / bloqueo | `op.acc.5` / `op.acc.6` |
+| krbtgt sin rotar, admin con SPN | `op.acc.5` |
+| Protected Users / cuentas privilegiadas inactivas | `op.acc.4` / `op.acc.2` |
+| LDAP sin firma / channel binding | `op.acc.5` / `op.acc.7` |
+| Trust sin SID filtering | `op.acc.4` |
+| LAPS no desplegado | `op.acc.6` |
+| Cuota de cuentas de equipo | `op.acc.4` |
 
 Controles de referencia: `op.acc.1` identificación · `op.acc.2` requisitos de acceso · `op.acc.3` segregación de funciones · `op.acc.4` gestión de derechos · `op.acc.5` mecanismo de autenticación · `op.acc.6` acceso local · `op.acc.7` acceso remoto. Marco: Real Decreto 311/2022. Las técnicas de AD CS siguen la clasificación ESC1–ESC8 de SpecterOps.
 
@@ -84,8 +92,9 @@ Controles de referencia: `op.acc.1` identificación · `op.acc.2` requisitos de 
 | Sección | Qué resuelve |
 |---|---|
 | **Conexión** | Dominio, DC, usuario y contraseña o hash NT. Exige confirmar autorización por escrito. El secreto no se guarda. |
-| **Panel** | Alertas totales, críticas, altas y controles `[op.acc]` afectados. |
-| **Hallazgos** | Lista por riesgo, con evidencia, incumplimiento y remediación. |
+| **Panel** | Alertas totales, críticas, altas y controles `[op.acc]` afectados. Resumen de criticidad del dominio. |
+| **Matriz MAGERIT** | Impacto × probabilidad (1–5). Vacía si no hay hallazgos. |
+| **Hallazgos** | Lista por riesgo, con evidencia, incumplimiento, remediación y camino a Domain Admin si aplica. |
 | **Controles ENS** | Los siete `op.acc`, cuántas alertas toca cada uno y cuál es el principal. |
 | **Informe** | Markdown y JSON para el informe de auditoría. Los textos del informe salen en español. |
 | **Ajustes** | Tema claro y oscuro, acento, idioma ES/EN, densidad y reducción de movimiento. |
@@ -151,15 +160,21 @@ El cuerpo de `POST /api/audit` es JSON: `domain`, `dc_host`, `username`, `passwo
 
 Solo para auditorías y pentests autorizados. Enumerar un Active Directory exige autorización expresa por escrito del propietario. El uso no autorizado es ilegal.
 
-La enumeración es de solo lectura: Kerberos (cuentas con SPN y sin preautenticación), delegación, plantillas AD CS ESC1–ESC8 y firma SMB. No incluye explotación, relay ni solicitud de tickets.
+La enumeración es de solo lectura: Kerberos (cuentas con SPN y sin preautenticación), delegación, plantillas AD CS ESC1–ESC8, firma SMB, política de dominio, `krbtgt`, Protected Users, LDAP, trusts y LAPS (esquema). No incluye explotación, relay, solicitud de tickets ni lectura de contraseñas LAPS.
 
 ## Limitaciones conocidas
 
 - **Sin credenciales, sin hallazgos.** `GET /api/scan` y `GET /api/report` no inventan datos: lista vacía e `is_sample: false`.
 - **Credenciales en la petición.** Dominio, DC, usuario y contraseña o hash NT se envían a `POST /api/audit`. No se guardan en disco, en `localStorage` ni en el repositorio.
-- **Alcance de la enumeración.** LDAP (Kerberos y delegación), Certipy `find` (AD CS, sin pedir certificados) e Impacket (firma SMB en el DC y hasta 48 equipos con `dNSHostName`). Un dominio grande puede dejar equipos sin comprobar en SMB.
+- **Alcance de la enumeración en vivo.** LDAP (Kerberos, delegación, política, trusts, LAPS esquema), Certipy `find` (AD CS, sin pedir certificados) e Impacket (firma SMB en el DC y hasta 48 equipos con `dNSHostName`). Un dominio grande puede dejar equipos sin comprobar en SMB.
+- **LDAP signing.** Se infiere del bind observado: si la sesión entra por LDAP sin TLS, el DC no forzó un canal íntegro. No se lee el GPO remoto para afirmar la política de todo el dominio.
+- **LAPS.** Solo presencia de atributos de esquema y caducidad. No se leen contraseñas.
 - **Informe en español.** El selector ES/EN cambia la interfaz. Los textos de las alertas y del informe los genera el backend en español, el idioma del ENS.
 - **Sin dominio de prueba en este repositorio.** No hay cifras de un escaneo real porque no se ha auditado ningún dominio desde aquí.
+
+## Hoja de ruta
+
+Lo que está hecho y lo que queda está en [ROADMAP.md](ROADMAP.md). El panel no rellena huecos con datos ficticios: si una comprobación no está implementada, no aparece como hallazgo.
 
 ## Estructura
 
@@ -167,18 +182,20 @@ La enumeración es de solo lectura: Kerberos (cuentas con SPN y sin preautentica
 ens_ad-auditor/
 │
 ├── frontend/src/                 Panel React + TypeScript + Vite
-│   ├── components/               Barra, hallazgos, splash, navegación móvil
+│   ├── components/               Barra, hallazgos, matriz MAGERIT, splash, navegación móvil
 │   ├── pages/                    Ajustes, Ayuda, Soporte, Perfil
 │   ├── settings/                 Tema, acento, idioma (ES/EN)
 │   └── api/                      Cliente de la API
 │
 ├── backend/app/                  API FastAPI
 │   ├── main.py                   Endpoints (scan vacío, audit en vivo)
-│   ├── enumeration/              Kerberos, delegación, AD CS, SMB (ldap3, impacket, certipy-ad)
+│   ├── enumeration/              Kerberos, delegación, AD CS, SMB, política (ldap3, impacket, certipy-ad)
 │   ├── mapping/ens_mapping.py    Motor ENS [op.acc]
+│   ├── mapping/magerit.py        Impacto × probabilidad y matriz
 │   └── report.py                 Informe Markdown y JSON
 │
-├── backend/tests/                Pruebas del mapeo
+├── backend/tests/                Pruebas del mapeo, MAGERIT, política y API
+├── ROADMAP.md                    Qué hay ahora y qué queda
 ├── docs/img/readme/              Capturas de este README
 ├── frontend/public/intro.mp4     Intro de arranque (10 s)
 └── LICENSE                       GPLv2

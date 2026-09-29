@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchControls, fetchMarkdownReport, fetchScan, runAudit } from "./api/client";
 import ConnectionForm, { EMPTY_DRAFT, draftToRequest, type ConnectionDraft } from "./components/ConnectionForm";
 import ControlsTable, { buildControlStats } from "./components/ControlsTable";
+import CriticalitySummary from "./components/CriticalitySummary";
 import FindingCard from "./components/FindingCard";
 import Icon from "./components/Icon";
 import MobileNav from "./components/MobileNav";
+import RiskMatrixGrid from "./components/RiskMatrix";
 import SeverityCards from "./components/SeverityCards";
 import Sidebar, { type PageId, type SectionId, type View } from "./components/Sidebar";
 import Splash from "./components/Splash";
@@ -19,6 +21,7 @@ import { RISK_ORDER, type AuditRequest, type GRCAlert, type RiskLevel, type Scan
 
 const SECTION_LABEL: Record<SectionId, TKey> = {
   panel: "nav.panel",
+  matriz: "nav.matrix",
   hallazgos: "nav.findings",
   controles: "nav.controls",
   informe: "nav.report",
@@ -29,7 +32,7 @@ const PAGE_LABEL: Record<PageId, TKey> = {
   soporte: "nav.support",
   perfil: "nav.profile",
 };
-const SECTION_ORDER: SectionId[] = ["panel", "hallazgos", "controles", "informe"];
+const SECTION_ORDER: SectionId[] = ["panel", "matriz", "hallazgos", "controles", "informe"];
 
 function formatDate(iso: string, locale: string): string {
   const d = new Date(iso);
@@ -280,7 +283,6 @@ export default function App() {
           critical={counts.Critico}
           controlsAffected={affectedControls}
           domain={domain}
-          isSample={!!data?.is_sample}
           hasData={scanned}
           onNavigate={navigate}
           onOpenPage={openPage}
@@ -290,7 +292,6 @@ export default function App() {
         <div className="main">
           <TopBar
             current={crumb}
-            isSample={!!data?.is_sample}
             showActions={view === "dashboard"}
             loading={loading}
             downloading={downloading}
@@ -339,15 +340,6 @@ export default function App() {
                     </p>
                   </div>
                 </div>
-
-                {data?.is_sample && (
-                  <div className="demo-banner" role="note">
-                    <Icon name="info" />
-                    <p>
-                      <b>{t("demo.bold")}</b> {t("demo.text")}
-                    </p>
-                  </div>
-                )}
 
                 <ConnectionForm
                   draft={draft}
@@ -440,12 +432,16 @@ export default function App() {
                       </div>
                     </div>
 
+                    {data.scanned && <CriticalitySummary summary={data.summary} scanned={data.scanned} />}
+
                     <SeverityCards
                       counts={counts}
                       total={total}
                       active={riskFilter}
                       onSelect={(r) => setRiskFilter(r)}
                     />
+
+                    <RiskMatrixGrid matrix={data.matrix} scanned={data.scanned} />
 
                     <section className="block" id="hallazgos" aria-labelledby="h-hallazgos">
                       <div className="block-head">

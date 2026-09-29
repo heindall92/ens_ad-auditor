@@ -87,7 +87,6 @@ export default function ProfilePage(props: Props) {
           <section className="card" aria-labelledby="pf-h-scan">
             <div className="card-head">
               <h3 id="pf-h-scan">{t("pf.scan")}</h3>
-              {data?.is_sample && <span className="badge accent">{t("top.demo")}</span>}
             </div>
             {data ? (
               <>
@@ -99,7 +98,7 @@ export default function ProfilePage(props: Props) {
                   <dt>{t("pf.generated")}</dt>
                   <dd>{props.generatedAt ?? t("pf.none")}</dd>
                   <dt>{t("pf.type")}</dt>
-                  <dd>{data.is_sample ? t("pf.typeDemo") : t("pf.typeReal")}</dd>
+                  <dd>{data.scanned ? t("pf.typeReal") : t("pf.typeIdle")}</dd>
                   <dt>{t("pf.topRisk")}</dt>
                   <dd>
                     {topRisk ? (

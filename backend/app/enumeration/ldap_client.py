@@ -18,10 +18,21 @@ _SD_CONTROL = security_descriptor_control(sdflags=0x07)
 
 
 class LdapSession:
-    def __init__(self, target: AuditTarget, connection: Connection, base_dn: str):
+    def __init__(
+        self,
+        target: AuditTarget,
+        connection: Connection,
+        base_dn: str,
+        schema_dn: Optional[str] = None,
+        config_dn: Optional[str] = None,
+        tls: bool = False,
+    ):
         self.target = target
         self.connection = connection
         self.base_dn = base_dn
+        self.schema_dn = schema_dn
+        self.config_dn = config_dn
+        self.tls = tls
 
     @property
     def domain(self) -> str:
@@ -93,16 +104,31 @@ def _try_bind(target: AuditTarget, use_ssl: bool, port: int) -> LdapSession:
         receive_timeout=20,
     )
     base_dn = None
+    schema_dn = None
+    config_dn = None
     if server.info is not None:
         other = server.info.other or {}
         defaults = other.get("defaultNamingContext") or []
         if defaults:
             base_dn = defaults[0]
+        schemas = other.get("schemaNamingContext") or []
+        if schemas:
+            schema_dn = schemas[0]
+        configs = other.get("configurationNamingContext") or []
+        if configs:
+            config_dn = configs[0]
     if not base_dn:
         base_dn = ",".join(f"DC={p}" for p in target.domain.split("."))
     target.ldap_scheme = "ldaps" if use_ssl else "ldap"
     target.ldap_port = port
-    return LdapSession(target, conn, base_dn)
+    return LdapSession(
+        target,
+        conn,
+        base_dn,
+        schema_dn=schema_dn,
+        config_dn=config_dn,
+        tls=use_ssl,
+    )
 
 
 def bind(target: AuditTarget) -> LdapSession:

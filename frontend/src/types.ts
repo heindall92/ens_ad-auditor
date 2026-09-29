@@ -37,6 +37,30 @@ export interface GRCAlert {
   remediation: string;
   references: string[];
   rationale: string | null;
+  impact: number;
+  likelihood: number;
+  score: number;
+  da_path: boolean;
+}
+
+export interface MatrixCell {
+  impact: number;
+  likelihood: number;
+  count: number;
+  risk: RiskLevel;
+}
+
+export interface RiskMatrix {
+  empty: boolean;
+  cells: MatrixCell[];
+}
+
+export interface DomainSummary {
+  highest_risk: RiskLevel | null;
+  controls_hit: number;
+  da_path: boolean;
+  da_path_count: number;
+  total_alerts: number;
 }
 
 export interface ScanResponse {
@@ -49,6 +73,8 @@ export interface ScanResponse {
   domain: string | null;
   dc_host: string | null;
   errors: string[];
+  matrix: RiskMatrix;
+  summary: DomainSummary;
 }
 
 export interface AuditRequest {

@@ -7,6 +7,7 @@ from .ens_mapping import (
     map_finding,
     map_findings,
 )
+from .magerit import build_matrix, build_summary, level_from_factors, score
 
 __all__ = [
     "map_finding",
@@ -15,4 +16,8 @@ __all__ = [
     "ENS_MAPPING",
     "ENS_CONTROLS",
     "SUBTYPE_OVERRIDES",
+    "build_matrix",
+    "build_summary",
+    "level_from_factors",
+    "score",
 ]

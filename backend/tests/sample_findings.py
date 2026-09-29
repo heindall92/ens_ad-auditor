@@ -1,9 +1,9 @@
-"""Synthetic findings used only to exercise the ENS mapping engine."""
+"""In-memory fixtures used only to exercise the ENS mapping engine."""
 from app.models import Finding, FindingType
 
 
 def mapping_fixtures():
-    """Same shapes the old stubs produced, marked as sample for the mapping tests."""
+    """Shapes covering the mapping rules. Never served by the live API."""
     return [
         Finding(
             finding_type=FindingType.SMB_SIGNING_DISABLED,

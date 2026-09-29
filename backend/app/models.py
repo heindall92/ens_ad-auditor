@@ -48,6 +48,17 @@ class FindingType(str, Enum):
     CONSTRAINED_RBCD_DELEGATION = "constrained_rbcd_delegation"
     EXCESSIVE_PRIVILEGES = "excessive_privileges"
     ADCS_ESC = "adcs_esc"
+    WEAK_PASSWORD_POLICY = "weak_password_policy"
+    WEAK_LOCKOUT_POLICY = "weak_lockout_policy"
+    KRBTGT_PASSWORD_AGE = "krbtgt_password_age"
+    PROTECTED_USERS_GAP = "protected_users_gap"
+    ADMIN_WITH_SPN = "admin_with_spn"
+    STALE_PRIVILEGED_ACCOUNT = "stale_privileged_account"
+    LDAP_SIGNING_NOT_REQUIRED = "ldap_signing_not_required"
+    LDAP_CHANNEL_BINDING_WEAK = "ldap_channel_binding_weak"
+    TRUST_SID_FILTERING = "trust_sid_filtering"
+    LAPS_NOT_DEPLOYED = "laps_not_deployed"
+    MACHINE_ACCOUNT_QUOTA = "machine_account_quota"
 
 
 class Finding(BaseModel):
@@ -68,7 +79,10 @@ class Finding(BaseModel):
     )
     is_sample: bool = Field(
         default=False,
-        description="True only for unit-test fixtures. Live enumeration never sets this.",
+        description=(
+            "Always false on live findings. True is reserved for unit-test "
+            "fixtures so the API can prove it never fabricates results."
+        ),
     )
 
 
@@ -98,6 +112,15 @@ class GRCAlert(BaseModel):
     )
     rationale: Optional[str] = Field(
         default=None, description="Why these ENS controls were chosen (ES, auditable)."
+    )
+    impact: int = Field(default=3, ge=1, le=5, description="MAGERIT impact 1-5.")
+    likelihood: int = Field(
+        default=3, ge=1, le=5, description="MAGERIT likelihood / frequency 1-5."
+    )
+    score: int = Field(default=9, description="impact × likelihood.")
+    da_path: bool = Field(
+        default=False,
+        description="True when the observed weakness is a direct path to Domain Admin.",
     )
 
     @property
@@ -171,11 +194,38 @@ class AuditRequest(BaseModel):
         return self
 
 
+class MatrixCell(BaseModel):
+    impact: int
+    likelihood: int
+    count: int
+    risk: RiskLevel
+
+
+class RiskMatrix(BaseModel):
+    """MAGERIT matrix built from returned alerts. Empty when there are none."""
+
+    empty: bool = True
+    cells: List[MatrixCell] = Field(default_factory=list)
+
+
+class DomainSummary(BaseModel):
+    """Domain-level criticidad. Zeros when there are no returned findings."""
+
+    highest_risk: Optional[RiskLevel] = None
+    controls_hit: int = 0
+    da_path: bool = False
+    da_path_count: int = 0
+    total_alerts: int = 0
+
+
 class ScanResponse(BaseModel):
     """Response for GET /api/scan and POST /api/audit."""
 
     generated_at: str
-    is_sample: bool = False
+    is_sample: bool = Field(
+        default=False,
+        description="Always false. The API never returns fabricated findings.",
+    )
     scanned: bool = False
     total_alerts: int
     counts_by_risk: dict
@@ -183,3 +233,5 @@ class ScanResponse(BaseModel):
     domain: Optional[str] = None
     dc_host: Optional[str] = None
     errors: List[str] = Field(default_factory=list)
+    matrix: RiskMatrix = Field(default_factory=RiskMatrix)
+    summary: DomainSummary = Field(default_factory=DomainSummary)
