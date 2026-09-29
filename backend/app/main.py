@@ -25,6 +25,7 @@ from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.enumeration import AuditConnectionError, run_all
+from app.enumeration.coverage import empty_coverage
 from app.enumeration.target import AuditTarget
 from app.mapping import (
     ENS_CONTROLS,
@@ -55,8 +56,9 @@ app.add_middleware(
 
 
 def _empty_scan() -> ScanResponse:
+    coverage = empty_coverage()
     return ScanResponse(
-        generated_at=build_json_report([], is_sample=False)["generated_at"],
+        generated_at=build_json_report([], is_sample=False, coverage=coverage)["generated_at"],
         is_sample=False,
         scanned=False,
         total_alerts=0,
@@ -67,23 +69,27 @@ def _empty_scan() -> ScanResponse:
         errors=[],
         matrix=RiskMatrix(empty=True, cells=[]),
         summary=DomainSummary(),
+        coverage=coverage,
     )
 
 
 def _run_live(req: AuditRequest) -> ScanResponse:
     target = AuditTarget.from_request(req)
     try:
-        findings, errors = run_all(target)
+        findings, errors, coverage = run_all(target)
     except AuditConnectionError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     alerts = map_findings(findings)
+    matrix = build_matrix(alerts)
+    summary = build_summary(alerts)
     payload = build_json_report(
         alerts,
         is_sample=False,
         domain=target.domain,
         errors=errors,
-        matrix=build_matrix(alerts),
-        summary=build_summary(alerts),
+        matrix=matrix,
+        summary=summary,
+        coverage=coverage,
     )
     return ScanResponse(
         generated_at=payload["generated_at"],
@@ -95,8 +101,9 @@ def _run_live(req: AuditRequest) -> ScanResponse:
         domain=target.domain,
         dc_host=target.dc_host,
         errors=errors,
-        matrix=build_matrix(alerts),
-        summary=build_summary(alerts),
+        matrix=matrix,
+        summary=summary,
+        coverage=coverage,
     )
 
 
@@ -153,7 +160,7 @@ def audit(req: AuditRequest):
 
 @app.get("/api/report", response_class=Response)
 def report_markdown_empty():
-    md = build_markdown_report([], is_sample=False)
+    md = build_markdown_report([], is_sample=False, coverage=empty_coverage())
     return Response(content=md, media_type="text/markdown; charset=utf-8")
 
 
@@ -167,13 +174,14 @@ def report_markdown_live(req: AuditRequest):
         errors=result.errors,
         matrix=result.matrix,
         summary=result.summary,
+        coverage=result.coverage,
     )
     return Response(content=md, media_type="text/markdown; charset=utf-8")
 
 
 @app.get("/api/report.json")
 def report_json_empty():
-    return build_json_report([], is_sample=False)
+    return build_json_report([], is_sample=False, coverage=empty_coverage())
 
 
 @app.post("/api/report.json")
@@ -186,4 +194,5 @@ def report_json_live(req: AuditRequest):
         errors=result.errors,
         matrix=result.matrix,
         summary=result.summary,
+        coverage=result.coverage,
     )

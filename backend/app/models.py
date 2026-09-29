@@ -59,6 +59,10 @@ class FindingType(str, Enum):
     TRUST_SID_FILTERING = "trust_sid_filtering"
     LAPS_NOT_DEPLOYED = "laps_not_deployed"
     MACHINE_ACCOUNT_QUOTA = "machine_account_quota"
+    ACL_CONTROL_PATH = "acl_control_path"
+    CLEARTEXT_SECRET_ATTR = "cleartext_secret_attr"
+    GPO_WEAK_SETTING = "gpo_weak_setting"
+    AUDIT_POLICY_GAP = "audit_policy_gap"
 
 
 class Finding(BaseModel):
@@ -208,6 +212,15 @@ class RiskMatrix(BaseModel):
     cells: List[MatrixCell] = Field(default_factory=list)
 
 
+class CoverageCheck(BaseModel):
+    """One roadmap check. no_comprobado means it was not run, not that it is clean."""
+
+    id: str
+    area: str
+    status: str = "no_comprobado"
+    detail: str
+
+
 class DomainSummary(BaseModel):
     """Domain-level criticidad. Zeros when there are no returned findings."""
 
@@ -235,3 +248,4 @@ class ScanResponse(BaseModel):
     errors: List[str] = Field(default_factory=list)
     matrix: RiskMatrix = Field(default_factory=RiskMatrix)
     summary: DomainSummary = Field(default_factory=DomainSummary)
+    coverage: List[CoverageCheck] = Field(default_factory=list)

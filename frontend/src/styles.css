@@ -895,3 +895,8 @@ body::before {
 .connect-legal p { margin: 4px 0 0; font-size: .84rem; }
 .err-list { margin: 6px 0 0; padding-left: 1.1em; font-size: .84rem; }
 .err-list li { margin: 2px 0; }
+.cov-detail { color: var(--ink-2); font-size: .84rem; max-width: 42rem; }
+.treat-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; margin-top: 8px; }
+@media (max-width: 720px) {
+  .treat-grid { grid-template-columns: 1fr; }
+}

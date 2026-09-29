@@ -6,7 +6,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from app.models import DomainSummary, GRCAlert, RiskLevel, RiskMatrix
+from app.enumeration.coverage import empty_coverage
+from app.models import CoverageCheck, DomainSummary, GRCAlert, RiskLevel, RiskMatrix
 
 RISK_ORDER = [RiskLevel.CRITICO, RiskLevel.ALTO, RiskLevel.MEDIO, RiskLevel.BAJO]
 
@@ -19,6 +20,10 @@ def counts_by_risk(alerts: List[GRCAlert]) -> Dict[str, int]:
     return counts
 
 
+def _checks(coverage: Optional[List[CoverageCheck]]) -> List[CoverageCheck]:
+    return list(coverage) if coverage is not None else empty_coverage()
+
+
 def build_json_report(
     alerts: List[GRCAlert],
     is_sample: bool = False,  # kept in the payload as the "never fabricated" flag
@@ -26,10 +31,12 @@ def build_json_report(
     errors: Optional[List[str]] = None,
     matrix: Optional[RiskMatrix] = None,
     summary: Optional[DomainSummary] = None,
+    coverage: Optional[List[CoverageCheck]] = None,
 ) -> dict:
     """Return a JSON-serialisable report dict."""
     matrix = matrix or RiskMatrix(empty=True, cells=[])
     summary = summary or DomainSummary()
+    checks = _checks(coverage)
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "is_sample": is_sample,
@@ -40,8 +47,20 @@ def build_json_report(
         "errors": list(errors or []),
         "matrix": matrix.model_dump(),
         "summary": summary.model_dump(),
+        "coverage": [item.model_dump() for item in checks],
         "alerts": [a.model_dump() for a in alerts],
     }
+
+
+def _coverage_section(checks: List[CoverageCheck]) -> List[str]:
+    lines = ["## Cobertura", ""]
+    lines.append("| Área | Estado | Detalle |")
+    lines.append("|---|---|---|")
+    for item in checks:
+        detail = item.detail.replace("|", "/")
+        lines.append(f"| {item.area} | {item.status} | {detail} |")
+    lines.append("")
+    return lines
 
 
 def build_markdown_report(
@@ -51,6 +70,7 @@ def build_markdown_report(
     errors: Optional[List[str]] = None,
     matrix: Optional[RiskMatrix] = None,
     summary: Optional[DomainSummary] = None,
+    coverage: Optional[List[CoverageCheck]] = None,
 ) -> str:
     """Return a Markdown report (Spanish, user-facing)."""
     generated = datetime.now(timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M %Z")
@@ -58,6 +78,7 @@ def build_markdown_report(
     matrix = matrix or RiskMatrix(empty=True, cells=[])
     summary = summary or DomainSummary()
 
+    checks = _checks(coverage)
     lines: List[str] = []
     lines.append("# Informe GRC — ENS AD Auditor")
     lines.append("")
@@ -85,6 +106,8 @@ def build_markdown_report(
         for err in errors:
             lines.append(f"- {err}")
         lines.append("")
+
+    lines.extend(_coverage_section(checks))
 
     lines.append("## Resumen de criticidad")
     lines.append("")
@@ -116,17 +139,27 @@ def build_markdown_report(
         lines.append("")
 
     if not alerts:
-        if domain:
+        ran = [item.area for item in checks if item.status == "comprobado"]
+        pending = [item.area for item in checks if item.status != "comprobado"]
+        if domain and ran:
             lines.append(
-                "Comprobado y limpio: la enumeración autorizada no ha devuelto "
-                "debilidades en las comprobaciones en vivo (Kerberos, delegación, "
-                "AD CS, SMB, política de dominio, krbtgt, Protected Users, trusts, "
-                "LAPS, cuota de equipos, LDAP). No se han inventado hallazgos."
+                "Comprobado y limpio en las filas con estado comprobado ("
+                + ", ".join(ran)
+                + "): la enumeración autorizada no ha devuelto debilidades en esas "
+                "comprobaciones. No se han inventado hallazgos."
             )
+            if pending:
+                lines.append("")
+                lines.append(
+                    "No comprobado: "
+                    + ", ".join(pending)
+                    + ". Esas filas no se han ejecutado y no se consideran limpias."
+                )
         else:
             lines.append(
-                "No comprobado: no se ha enumerado ningún dominio. Hace falta "
-                "conectar con autorización expresa por escrito. La matriz está vacía."
+                "No comprobado: no se ha enumerado ningún dominio, o ninguna fila "
+                "de cobertura llegó a ejecutarse. Hace falta conectar con "
+                "autorización expresa por escrito. La matriz está vacía."
             )
         lines.append("")
         lines.append("---")

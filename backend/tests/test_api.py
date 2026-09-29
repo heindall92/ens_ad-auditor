@@ -19,6 +19,9 @@ def test_scan_without_credentials_is_empty_and_not_sample():
     assert body["matrix"]["cells"] == []
     assert body["summary"]["total_alerts"] == 0
     assert body["summary"]["da_path"] is False
+    assert body["coverage"]
+    assert {row["status"] for row in body["coverage"]} == {"no_comprobado"}
+    assert {row["id"] for row in body["coverage"]} >= {"tiering", "entra", "acl", "gpo", "secretos"}
     dumped = res.text.lower()
     assert "corp.example.local" not in dumped
     assert "[demo]" not in dumped
@@ -32,6 +35,8 @@ def test_report_without_credentials_is_empty_and_not_sample():
     body = res.json()
     assert body["is_sample"] is False
     assert body["alerts"] == []
+    assert body["coverage"]
+    assert all(row["status"] == "no_comprobado" for row in body["coverage"])
     assert "corp.example.local" not in res.text.lower()
     md = client.get("/api/report")
     assert md.status_code == 200
@@ -93,9 +98,20 @@ def test_mapping_exposes_magerit_factors():
 
 
 def test_markdown_with_domain_and_no_alerts_is_checked_clean():
+    from app.models import CoverageCheck
     from app.report import build_markdown_report
 
-    md = build_markdown_report([], domain="lab.test").lower()
+    coverage = [
+        CoverageCheck(id="kerberos", area="Kerberos", status="comprobado", detail="leído"),
+        CoverageCheck(
+            id="tiering",
+            area="Tiering",
+            status="no_comprobado",
+            detail="sin equipo de inicio de sesión",
+        ),
+    ]
+    md = build_markdown_report([], domain="lab.test", coverage=coverage).lower()
     assert "comprobado y limpio" in md
     assert "no se han inventado" in md
-    assert "no comprobado" not in md
+    assert "no comprobado" in md
+    assert "tiering" in md

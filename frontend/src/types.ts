@@ -63,6 +63,13 @@ export interface DomainSummary {
   total_alerts: number;
 }
 
+export interface CoverageCheck {
+  id: string;
+  area: string;
+  status: string;
+  detail: string;
+}
+
 export interface ScanResponse {
   generated_at: string;
   is_sample: boolean;
@@ -75,6 +82,7 @@ export interface ScanResponse {
   errors: string[];
   matrix: RiskMatrix;
   summary: DomainSummary;
+  coverage?: CoverageCheck[];
 }
 
 export interface AuditRequest {

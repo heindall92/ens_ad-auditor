@@ -16,7 +16,9 @@ from app.models import Finding, FindingType
 
 MODULE = "enumeration.adcs"
 
-ESC_KEYS = {f"ESC{i}" for i in range(1, 9)}
+def _is_esc(name: str) -> bool:
+    text = str(name).strip().upper()
+    return text.startswith("ESC") and text[3:].isdigit()
 
 
 def _certipy_target(target: AuditTarget):
@@ -60,7 +62,7 @@ def _findings_from_output(data: Dict[str, Any]) -> List[Finding]:
         dns = ca.get("DNS Name") or ""
         vulns = ca.get("[!] Vulnerabilities") or {}
         for esc, desc in vulns.items():
-            if esc not in ESC_KEYS:
+            if not _is_esc(str(esc)):
                 continue
             target = f"CA: {name}" + (f" ({dns})" if dns else "")
             findings.append(
@@ -84,7 +86,7 @@ def _findings_from_output(data: Dict[str, Any]) -> List[Finding]:
         ca_label = ", ".join(str(c) for c in cas) if cas else "CA desconocida"
         vulns = tpl.get("[!] Vulnerabilities") or {}
         for esc, desc in vulns.items():
-            if esc not in ESC_KEYS:
+            if not _is_esc(str(esc)):
                 continue
             findings.append(
                 Finding(
