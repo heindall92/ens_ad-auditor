@@ -3,7 +3,7 @@ import type { RiskLevel } from "../types";
 import { useSettings } from "../settings/SettingsContext";
 
 /** Scroll sections of the dashboard view. */
-export type SectionId = "panel" | "hallazgos" | "controles" | "informe";
+export type SectionId = "panel" | "matriz" | "hallazgos" | "controles" | "informe";
 /** Stand-alone pages rendered instead of the dashboard. */
 export type PageId = "ajustes" | "ayuda" | "soporte" | "perfil";
 export type View = "dashboard" | PageId;
@@ -16,7 +16,6 @@ interface Props {
   critical: number;
   controlsAffected: number;
   domain: string;
-  isSample: boolean;
   hasData: boolean;
   onNavigate: (section: SectionId, risk?: RiskLevel | null) => void;
   onOpenPage: (page: PageId) => void;
@@ -65,14 +64,12 @@ export default function Sidebar(props: Props) {
       </div>
 
       <div className="proj-switch static" role="status">
-        <span className={`proj-ic ${props.isSample ? "demo" : ""}`.trim()}>
+        <span className="proj-ic">
           <Icon name="server" size={16} />
         </span>
         <span className="proj-txt">
           <b>{props.domain}</b>
-          <small>
-            {!props.hasData ? t("ctx.noData") : props.isSample ? t("ctx.demo") : t("ctx.real")}
-          </small>
+          <small>{!props.hasData ? t("ctx.noData") : t("ctx.real")}</small>
         </span>
       </div>
 
@@ -99,6 +96,12 @@ export default function Sidebar(props: Props) {
           onClick={() => onNavigate("hallazgos", "Critico")}
           count={props.critical}
           countTone="crit"
+        />
+        <NavItem
+          label={t("nav.matrix")}
+          icon="layers"
+          current={onDash && section === "matriz"}
+          onClick={() => onNavigate("matriz")}
         />
         <div className="nav-group">{t("nav.group.framework")}</div>
         <NavItem

@@ -30,6 +30,10 @@ export default function FindingCard({ alert, onControlSelect }: Props) {
             {t(`risk.${alert.risk}`)}
           </span>
           <code className="muted">{alert.rule_id}</code>
+          <span className="chip" title={t("f.magerit", { i: alert.impact, l: alert.likelihood, s: alert.score })}>
+            {alert.impact}×{alert.likelihood}
+          </span>
+          {alert.da_path && <span className="badge crit">{t("f.daPath")}</span>}
           <span className="chips">
             {alert.ens_controls.map((c) => (
               <span

@@ -11,3 +11,7 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+# salidas accidentales de Certipy
+*_Certipy.json
+*_Certipy.txt

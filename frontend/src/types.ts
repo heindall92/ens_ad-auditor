@@ -37,17 +37,55 @@ export interface GRCAlert {
   remediation: string;
   references: string[];
   rationale: string | null;
+  impact: number;
+  likelihood: number;
+  score: number;
+  da_path: boolean;
+}
+
+export interface MatrixCell {
+  impact: number;
+  likelihood: number;
+  count: number;
+  risk: RiskLevel;
+}
+
+export interface RiskMatrix {
+  empty: boolean;
+  cells: MatrixCell[];
+}
+
+export interface DomainSummary {
+  highest_risk: RiskLevel | null;
+  controls_hit: number;
+  da_path: boolean;
+  da_path_count: number;
+  total_alerts: number;
 }
 
 export interface ScanResponse {
   generated_at: string;
   is_sample: boolean;
+  scanned: boolean;
   total_alerts: number;
   counts_by_risk: Record<RiskLevel, number>;
   alerts: GRCAlert[];
+  domain: string | null;
+  dc_host: string | null;
+  errors: string[];
+  matrix: RiskMatrix;
+  summary: DomainSummary;
 }
 
-// GET /api/controls: catálogo de controles ENS de la familia [op.acc].
+export interface AuditRequest {
+  domain: string;
+  dc_host: string;
+  username: string;
+  password?: string;
+  nthash?: string;
+  authorized: boolean;
+}
+
 export interface ControlsCatalog {
   family: string;
   controls: Record<string, string>;

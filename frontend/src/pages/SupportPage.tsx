@@ -7,7 +7,7 @@ import PageHead from "./PageHead";
 
 // Public project link; override at build time with VITE_REPO_URL.
 const REPO_URL: string = import.meta.env.VITE_REPO_URL ?? "https://github.com/heindall92/ens_ad-auditor";
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
 type Category = "bug" | "mapping" | "idea";
 const CATEGORIES: [Category, TKey][] = [
@@ -44,7 +44,7 @@ export default function SupportPage({ notify, scanSummary }: Props) {
       setInvalid(true);
       return;
     }
-    // Demo only: nothing leaves the browser. Confirm and clear the form.
+    // The request stays in this browser. Confirm and clear the form.
     notify(t("sup.sent", { s: subject.trim() }));
     setSubject("");
     setMessage("");
@@ -59,7 +59,7 @@ export default function SupportPage({ notify, scanSummary }: Props) {
         <form className="card support-form" onSubmit={submit} noValidate aria-labelledby="sup-h-form">
           <div className="card-head">
             <h3 id="sup-h-form">{t("sup.formTitle")}</h3>
-            <span className="badge neutral">Demo</span>
+            <span className="badge neutral">{t("sup.formLocal")}</span>
           </div>
           <div className="form-grid">
             <label className="fld">
@@ -171,7 +171,7 @@ export default function SupportPage({ notify, scanSummary }: Props) {
             <div>
               <b id="sup-h-legal">{t("sup.legalTitle")}</b>
               <p>{t("sup.legalText")}</p>
-              <p className="muted small">{t("sup.legalDemo")}</p>
+              <p className="muted small">{t("sup.legalEmpty")}</p>
             </div>
           </section>
         </div>

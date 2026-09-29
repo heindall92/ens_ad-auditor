@@ -35,6 +35,7 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+from app.mapping.magerit import level_from_factors, score as magerit_score
 from app.models import EnsControl, Finding, FindingType, GRCAlert, RiskLevel
 
 
@@ -67,6 +68,9 @@ ENS_MAPPING: Dict[FindingType, dict] = {
     # -- SMB signing ------------------------------------------------------
     FindingType.SMB_SIGNING_DISABLED: {
         "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
         "controls": [
             ("op.acc.5", True),   # autenticación (integridad/autenticidad de sesión)
             ("op.acc.7", False),  # acceso remoto sobre canal no protegido
@@ -99,6 +103,9 @@ ENS_MAPPING: Dict[FindingType, dict] = {
     # -- Kerberoasting ----------------------------------------------------
     FindingType.KERBEROASTING: {
         "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
         "controls": [
             ("op.acc.5", True),   # mecanismo de autenticación (cifrado débil RC4)
             ("op.acc.6", False),  # calidad de credenciales de cuentas de servicio
@@ -129,6 +136,9 @@ ENS_MAPPING: Dict[FindingType, dict] = {
     # -- AS-REP roasting --------------------------------------------------
     FindingType.ASREP_ROASTING: {
         "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
         "controls": [
             ("op.acc.5", True),   # mecanismo de autenticación (sin pre-auth)
             ("op.acc.6", False),
@@ -158,6 +168,9 @@ ENS_MAPPING: Dict[FindingType, dict] = {
     # -- Unconstrained delegation ----------------------------------------
     FindingType.UNCONSTRAINED_DELEGATION: {
         "risk": RiskLevel.CRITICO,
+        "impact": 5,
+        "likelihood": 4,
+        "da_path": True,
         "controls": [
             ("op.acc.4", True),   # proceso de gestión de derechos de acceso
             ("op.acc.2", False),  # requisitos de acceso
@@ -191,6 +204,9 @@ ENS_MAPPING: Dict[FindingType, dict] = {
     # -- Constrained / RBCD misconfig ------------------------------------
     FindingType.CONSTRAINED_RBCD_DELEGATION: {
         "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
         "controls": [
             ("op.acc.4", True),   # proceso de gestión de derechos de acceso
             ("op.acc.3", False),  # segregación de funciones
@@ -222,6 +238,9 @@ ENS_MAPPING: Dict[FindingType, dict] = {
     # -- Excessive privileges / least privilege --------------------------
     FindingType.EXCESSIVE_PRIVILEGES: {
         "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": True,
         "controls": [
             ("op.acc.2", True),   # requisitos de acceso (mínimo privilegio)
             ("op.acc.4", False),  # gestión de derechos de acceso
@@ -253,6 +272,9 @@ ENS_MAPPING: Dict[FindingType, dict] = {
     # -- ADCS ESC1-ESC8 ---------------------------------------------------
     FindingType.ADCS_ESC: {
         "risk": RiskLevel.CRITICO,
+        "impact": 5,
+        "likelihood": 4,
+        "da_path": True,
         "controls": [
             ("op.acc.5", True),   # mecanismo de autenticación (certificados)
             ("op.acc.4", False),  # gestión de derechos (enrollment rights)
@@ -286,6 +308,240 @@ ENS_MAPPING: Dict[FindingType, dict] = {
             "falsas); op.acc.4 acompaña por los derechos de inscripción excesivos."
         ),
     },
+    FindingType.WEAK_PASSWORD_POLICY: {
+        "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.5", True),
+            ("op.acc.6", False),
+        ],
+        "non_compliance": (
+            "Riesgo Alto — Incumplimiento del mecanismo de autenticación del ENS "
+            "[op.acc.5]. La política de contraseñas del dominio no impone longitud, "
+            "caducidad o historial suficientes, lo que debilita las credenciales "
+            "de toda la organización."
+        ),
+        "remediation": (
+            "Elevar minPwdLength (14 o más), historial y complejidad; evitar "
+            "contraseñas que no caduquen en cuentas de usuario; aplicar Fine-Grained "
+            "Password Policies a cuentas privilegiadas."
+        ),
+        "references": ["op.acc.1 Identificación"],
+        "rationale": "La calidad de la contraseña es el mecanismo de autenticación (op.acc.5).",
+    },
+    FindingType.WEAK_LOCKOUT_POLICY: {
+        "risk": RiskLevel.MEDIO,
+        "impact": 3,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.6", True),
+            ("op.acc.5", False),
+        ],
+        "non_compliance": (
+            "Riesgo Medio — Incumplimiento del acceso local del ENS [op.acc.6]. "
+            "El umbral de bloqueo de cuenta es nulo o demasiado alto, lo que permite "
+            "pruebas de contraseña sin contención."
+        ),
+        "remediation": (
+            "Definir lockoutThreshold (p. ej. 5–10), lockoutDuration y la ventana "
+            "de observación. Coordinar con monitorización para no facilitar DoS."
+        ),
+        "references": ["op.acc.5 Mecanismo de autenticación"],
+        "rationale": "El bloqueo es una salvaguarda del acceso local (op.acc.6).",
+    },
+    FindingType.KRBTGT_PASSWORD_AGE: {
+        "risk": RiskLevel.ALTO,
+        "impact": 5,
+        "likelihood": 2,
+        "da_path": False,
+        "controls": [
+            ("op.acc.5", True),
+            ("op.acc.4", False),
+        ],
+        "non_compliance": (
+            "Riesgo Alto — Incumplimiento del mecanismo de autenticación del ENS "
+            "[op.acc.5]. La cuenta krbtgt no ha rotado su contraseña en el plazo "
+            "recomendado; un KRBTGT comprometido permite Golden Tickets."
+        ),
+        "remediation": (
+            "Rotar krbtgt dos veces (reset secuencial) según el procedimiento de "
+            "Microsoft; documentar la cadencia (180 días o menos) y vigilar TGT anómalos."
+        ),
+        "references": ["op.exp.8 Registro de la actividad"],
+        "rationale": "krbtgt es la clave del mecanismo Kerberos (op.acc.5).",
+    },
+    FindingType.PROTECTED_USERS_GAP: {
+        "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.2", True),
+            ("op.acc.4", False),
+        ],
+        "non_compliance": (
+            "Riesgo Alto — Incumplimiento de los requisitos de acceso del ENS "
+            "[op.acc.2]. Cuentas privilegiadas no están en Protected Users, así que "
+            "siguen expuestas a NTLM, delegación y caché de credenciales débiles."
+        ),
+        "remediation": (
+            "Incluir las cuentas administrativas de usuario en Protected Users "
+            "tras validar compatibilidad (no equipos, no servicios con NTLM)."
+        ),
+        "references": ["op.acc.4 Proceso de gestión de derechos de acceso"],
+        "rationale": "Protected Users es un requisito de acceso para privilegio (op.acc.2).",
+    },
+    FindingType.ADMIN_WITH_SPN: {
+        "risk": RiskLevel.CRITICO,
+        "impact": 5,
+        "likelihood": 4,
+        "da_path": True,
+        "controls": [
+            ("op.acc.5", True),
+            ("op.acc.4", False),
+        ],
+        "non_compliance": (
+            "Riesgo Crítico — Incumplimiento del mecanismo de autenticación del ENS "
+            "[op.acc.5]. Una cuenta privilegiada tiene SPN: es kerberoasteable y, "
+            "si se rompe la contraseña, da un camino directo a administrador de dominio."
+        ),
+        "remediation": (
+            "Retirar SPN de cuentas privilegiadas; usar gMSA para servicios; "
+            "separar la identidad administrativa de la de servicio."
+        ),
+        "references": ["op.acc.2 Requisitos de acceso"],
+        "rationale": "Privilegio más SPN es autenticación débil con impacto de DA (op.acc.5).",
+    },
+    FindingType.STALE_PRIVILEGED_ACCOUNT: {
+        "risk": RiskLevel.MEDIO,
+        "impact": 3,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.4", True),
+            ("op.acc.2", False),
+        ],
+        "non_compliance": (
+            "Riesgo Medio — Incumplimiento del proceso de gestión de derechos del ENS "
+            "[op.acc.4]. Hay cuentas privilegiadas sin inicio de sesión reciente: "
+            "derechos que no se revisan y que permanecen atacables."
+        ),
+        "remediation": (
+            "Revisar lastLogonTimestamp de grupos privilegiados; deshabilitar o "
+            "retirar cuentas inactivas; aplicar recertificación periódica."
+        ),
+        "references": ["op.acc.3 Segregación de funciones y tareas"],
+        "rationale": "La vigencia del derecho es gestión de accesos (op.acc.4).",
+    },
+    FindingType.LDAP_SIGNING_NOT_REQUIRED: {
+        "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.5", True),
+            ("op.acc.7", False),
+        ],
+        "non_compliance": (
+            "Riesgo Alto — Incumplimiento del mecanismo de autenticación del ENS "
+            "[op.acc.5]. El DC aceptó un enlace LDAP sin firma ni TLS: el canal de "
+            "directorio no exige integridad."
+        ),
+        "remediation": (
+            "Exigir LDAP signing (LdapServerIntegrity=2) y preferir LDAPS; "
+            "deshabilitar LDAP unsigned en los DC."
+        ),
+        "references": ["mp.com.3 Protección de la integridad y autenticidad (canal)"],
+        "rationale": "La integridad del enlace LDAP es autenticación de sesión (op.acc.5).",
+    },
+    FindingType.LDAP_CHANNEL_BINDING_WEAK: {
+        "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.5", True),
+            ("op.acc.7", False),
+        ],
+        "non_compliance": (
+            "Riesgo Alto — Incumplimiento del mecanismo de autenticación del ENS "
+            "[op.acc.5]. Channel binding LDAP no está en modo Always, o el DC "
+            "aceptó LDAP sin TLS, lo que facilita relay NTLM contra LDAP."
+        ),
+        "remediation": (
+            "Poner msDS-LdapEnforceChannelBinding en 2 (always) y exigir LDAPS; "
+            "aplicar EPA en los servicios que hablen LDAP."
+        ),
+        "references": ["op.acc.7 Acceso remoto"],
+        "rationale": "Channel binding cierra el relay contra el autenticador (op.acc.5).",
+    },
+    FindingType.TRUST_SID_FILTERING: {
+        "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.4", True),
+            ("op.acc.2", False),
+        ],
+        "non_compliance": (
+            "Riesgo Alto — Incumplimiento de la gestión de derechos del ENS "
+            "[op.acc.4]. Hay un trust externo o de bosque sin SID filtering "
+            "(quarantine), lo que permite SID history desde el dominio de confianza."
+        ),
+        "remediation": (
+            "Activar SID filtering (quarantine) en trusts externos; revisar "
+            "dirección y transividad; documentar cada trust."
+        ),
+        "references": ["op.acc.2 Requisitos de acceso"],
+        "rationale": "Un trust es un derecho de acceso entre dominios (op.acc.4).",
+    },
+    FindingType.LAPS_NOT_DEPLOYED: {
+        "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.5", True),
+            ("op.acc.6", False),
+        ],
+        "non_compliance": (
+            "Riesgo Alto — Incumplimiento del mecanismo de autenticación del ENS "
+            "[op.acc.5] y del acceso local [op.acc.6]. LAPS (legacy o Windows LAPS) "
+            "no está en el esquema o no hay equipos con caducidad de contraseña local: "
+            "la cuenta local de administrador puede estar reutilizada."
+        ),
+        "remediation": (
+            "Extender el esquema con Windows LAPS, aplicar la GPO y conceder lectura "
+            "solo a quien administre esos equipos. No reutilizar la clave local."
+        ),
+        "references": ["op.acc.4 Proceso de gestión de derechos de acceso"],
+        "rationale": "La contraseña local del equipo es autenticación local (op.acc.5 / op.acc.6).",
+    },
+    FindingType.MACHINE_ACCOUNT_QUOTA: {
+        "risk": RiskLevel.MEDIO,
+        "impact": 3,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.4", True),
+            ("op.acc.1", False),
+        ],
+        "non_compliance": (
+            "Riesgo Medio — Incumplimiento de la gestión de derechos del ENS "
+            "[op.acc.4]. ms-DS-MachineAccountQuota permite a un usuario unir "
+            "equipos al dominio sin control de altas."
+        ),
+        "remediation": (
+            "Poner ms-DS-MachineAccountQuota a 0 y unir equipos solo con cuentas "
+            "delegadas (pre-stage o grupos de alta de equipos)."
+        ),
+        "references": ["op.acc.1 Identificación"],
+        "rationale": "Unir un equipo es un alta de identidad (op.acc.4 / op.acc.1).",
+    },
 }
 
 
@@ -295,6 +551,13 @@ ENS_MAPPING: Dict[FindingType, dict] = {
 # new FindingType. Only the provided keys override the base rule.
 # ---------------------------------------------------------------------------
 SUBTYPE_OVERRIDES: Dict[FindingType, Dict[str, dict]] = {
+    FindingType.CONSTRAINED_RBCD_DELEGATION: {
+        "rbcd_writable": {
+            "da_path": True,
+            "impact": 4,
+            "likelihood": 3,
+        },
+    },
     FindingType.ADCS_ESC: {
         "ESC1": {
             "non_compliance": (
@@ -332,6 +595,9 @@ SUBTYPE_OVERRIDES: Dict[FindingType, Dict[str, dict]] = {
                 ("op.acc.7", False),  # acceso remoto por canal HTTP no protegido
                 ("op.acc.4", False),
             ],
+            "impact": 5,
+            "likelihood": 4,
+            "da_path": True,
             "non_compliance": (
                 "Riesgo Crítico — ESC8. Incumplimiento del mecanismo de "
                 "autenticación del ENS [op.acc.5] y del acceso remoto [op.acc.7]. La "
@@ -362,7 +628,7 @@ def map_finding(finding: Finding) -> GRCAlert:
     """
     rule = ENS_MAPPING.get(finding.finding_type)
     if rule is None:
-        # Fail safe: unknown finding types still produce a defensible alert.
+        impact, likelihood = 3, 3
         return GRCAlert(
             rule_id=f"{finding.finding_type.value}:unmapped",
             finding=finding,
@@ -375,6 +641,10 @@ def map_finding(finding: Finding) -> GRCAlert:
             remediation="Analizar el hallazgo y asignar el control ENS adecuado.",
             references=[],
             rationale="Sin regla en ENS_MAPPING; se asigna un control por defecto.",
+            impact=impact,
+            likelihood=likelihood,
+            score=magerit_score(impact, likelihood),
+            da_path=False,
         )
 
     # Start from the base rule, then apply subtype overrides if any.
@@ -388,15 +658,21 @@ def map_finding(finding: Finding) -> GRCAlert:
             merged.update(override)
 
     controls = [_control(cid, is_primary=prim) for cid, prim in merged["controls"]]
+    impact = int(merged.get("impact", 3))
+    likelihood = int(merged.get("likelihood", 3))
     return GRCAlert(
         rule_id=rule_id,
         finding=finding,
-        risk=merged["risk"],
+        risk=level_from_factors(impact, likelihood),
         ens_controls=controls,
         non_compliance=merged["non_compliance"],
         remediation=merged["remediation"],
         references=list(merged.get("references", [])),
         rationale=merged.get("rationale"),
+        impact=impact,
+        likelihood=likelihood,
+        score=magerit_score(impact, likelihood),
+        da_path=bool(merged.get("da_path", False)),
     )
 
 
@@ -423,6 +699,12 @@ def export_rules() -> List[dict]:
                 "remediation": rule["remediation"],
                 "references": rule.get("references", []),
                 "rationale": rule.get("rationale"),
+                "impact": rule.get("impact"),
+                "likelihood": rule.get("likelihood"),
+                "da_path": bool(rule.get("da_path", False)),
+                "magerit_risk": level_from_factors(
+                    int(rule.get("impact", 3)), int(rule.get("likelihood", 3))
+                ).value,
                 "subtypes": sorted(SUBTYPE_OVERRIDES.get(ftype, {}).keys()),
             }
         )
