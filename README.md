@@ -197,7 +197,7 @@ Componentes de terceros: FastAPI (MIT), React (MIT), Vite (MIT). Iconografía de
 <td align="center" valign="top">
 <img src="https://avatars.githubusercontent.com/u/238087465?v=4" alt="Yoandy Ramírez Delgado" width="96"/><br/>
 <b>Yoandy Ramírez Delgado</b><br/>
-<sub>Creador y mantenedor · Junior Pentester · eJPTv2 · Máster en Ciberseguridad y IA (Evolve Academy)</sub><br/>
+<sub>Creador y mantenedor · Junior Pentester · eJPTv2</sub><br/>
 <a href="https://www.linkedin.com/in/yoandyrd92/">LinkedIn</a> · <a href="https://github.com/heindall92">GitHub</a> · <a href="https://yoandyramirez.com">Portafolio</a> · <a href="https://profile.hackthebox.com/profile/019c5812-b4ca-7315-b12f-14db6d2b42fa">HackTheBox</a>
 </td>
 </tr>
