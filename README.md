@@ -112,16 +112,21 @@ Las preferencias se guardan en el `localStorage` de este navegador. No se envía
 
 ## <img src="docs/assets/icons/image.svg" width="20" height="20" valign="middle"/> Capturas
 
+Sin enumeración autorizada. «No comprobado» no es un dominio limpio.
+
 <p align="center">
-  <img src="docs/img/readme/panel.png" alt="Panel de escritorio" width="880"/>
-  <br/><sub><b>Panel</b> · conformidad, severidad y hallazgos. La captura es de una versión anterior del interfaz; esta versión no muestra hallazgos sin enumerar un dominio autorizado.</sub>
+  <img src="docs/img/readme/cobertura.png" alt="Cobertura de la hoja de ruta, todas las filas no comprobado" width="880"/>
+  <br/><sub><b>Cobertura</b> · sin enumeración autorizada. Cada fila dice «No comprobado». Tiering y Entra ID no ofrecen «Ver hallazgos». «No comprobado» no es un dominio limpio.</sub>
 </p>
 
 <p align="center">
-  <img src="docs/img/readme/movil.png" alt="Panel en móvil" width="280"/>
-  &nbsp;&nbsp;
-  <img src="docs/img/readme/mas.png" alt="Hoja Más" width="280"/>
-  <br/><sub><b>Vista móvil</b> · barra inferior y hoja Más</sub>
+  <img src="docs/img/readme/hallazgos.png" alt="Hallazgos filtrados por Kerberos, cero alertas" width="880"/>
+  <br/><sub><b>Hallazgos</b> · filtro Área: Kerberos y 0 de 0 alertas. El vacío es falta de enumeración autorizada, no un dominio limpio.</sub>
+</p>
+
+<p align="center">
+  <img src="docs/img/readme/informe.png" alt="Informe con cobertura no comprobado y sin alertas" width="880"/>
+  <br/><sub><b>Informe</b> · controles sin alertas. La vista previa lista la cobertura como no comprobado. «No comprobado» no es un dominio limpio.</sub>
 </p>
 
 ## <img src="docs/assets/icons/rocket.svg" width="20" height="20" valign="middle"/> Arranque rápido
