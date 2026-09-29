@@ -25,7 +25,7 @@ export default function MobileNav({ view, section, riskFilter, total, critical, 
   const onDash = view === "dashboard";
   const criticalView = onDash && section === "hallazgos" && riskFilter === "Critico";
   const moreCurrent =
-    (onDash && (section === "controles" || section === "matriz")) ||
+    (onDash && (section === "controles" || section === "matriz" || section === "cobertura")) ||
     view === "ajustes" ||
     view === "ayuda" ||
     view === "soporte" ||
@@ -60,6 +60,13 @@ export default function MobileNav({ view, section, riskFilter, total, critical, 
       icon: "layers",
       current: onDash && section === "matriz",
       onClick: () => goSection("matriz"),
+    },
+    {
+      id: "cobertura",
+      label: t("nav.coverage"),
+      icon: "check",
+      current: onDash && section === "cobertura",
+      onClick: () => goSection("cobertura"),
     },
     {
       id: "controles",

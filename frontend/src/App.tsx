@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchControls, fetchMarkdownReport, fetchScan, runAudit } from "./api/client";
 import ConnectionForm, { EMPTY_DRAFT, draftToRequest, type ConnectionDraft } from "./components/ConnectionForm";
+import CoveragePanel from "./components/CoveragePanel";
 import ControlsTable, { buildControlStats } from "./components/ControlsTable";
 import CriticalitySummary from "./components/CriticalitySummary";
 import FindingCard from "./components/FindingCard";
@@ -17,12 +18,15 @@ import SettingsPage from "./pages/SettingsPage";
 import SupportPage from "./pages/SupportPage";
 import { useSettings } from "./settings/SettingsContext";
 import type { TKey } from "./settings/i18n";
+import { alertMatchesCoverage } from "./coverageFilter";
+import { appendixMarkdown, type TreatStatus } from "./treatment";
 import { RISK_ORDER, type AuditRequest, type GRCAlert, type RiskLevel, type ScanResponse } from "./types";
 
 const SECTION_LABEL: Record<SectionId, TKey> = {
   panel: "nav.panel",
   matriz: "nav.matrix",
   hallazgos: "nav.findings",
+  cobertura: "nav.coverage",
   controles: "nav.controls",
   informe: "nav.report",
 };
@@ -32,7 +36,7 @@ const PAGE_LABEL: Record<PageId, TKey> = {
   soporte: "nav.support",
   perfil: "nav.profile",
 };
-const SECTION_ORDER: SectionId[] = ["panel", "matriz", "hallazgos", "controles", "informe"];
+const SECTION_ORDER: SectionId[] = ["panel", "matriz", "hallazgos", "cobertura", "controles", "informe"];
 
 function formatDate(iso: string, locale: string): string {
   const d = new Date(iso);
@@ -62,6 +66,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [riskFilter, setRiskFilter] = useState<RiskLevel | null>(null);
   const [controlFilter, setControlFilter] = useState<string | null>(null);
+  const [moduleFilter, setModuleFilter] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [view, setView] = useState<View>("dashboard");
   const [section, setSection] = useState<SectionId>("panel");
@@ -188,9 +193,10 @@ export default function App() {
       sortedAlerts.filter(
         (a) =>
           (!riskFilter || a.risk === riskFilter) &&
-          (!controlFilter || a.ens_controls.some((c) => c.id === controlFilter)),
+          (!controlFilter || a.ens_controls.some((c) => c.id === controlFilter)) &&
+          alertMatchesCoverage(a, moduleFilter),
       ),
-    [sortedAlerts, riskFilter, controlFilter],
+    [sortedAlerts, riskFilter, controlFilter, moduleFilter],
   );
 
   const controlStats = useMemo(
@@ -204,6 +210,7 @@ export default function App() {
     if (risk !== undefined) {
       setRiskFilter(risk);
       setControlFilter(null);
+      setModuleFilter(null);
     }
     setSection(target);
     setDrawerOpen(false);
@@ -225,7 +232,17 @@ export default function App() {
 
   const selectControl = (id: string | null) => {
     setControlFilter(id);
-    if (id) navigate("hallazgos");
+    if (id) {
+      setModuleFilter(null);
+      navigate("hallazgos");
+    }
+  };
+
+  const selectCoverage = (id: string) => {
+    setModuleFilter((cur) => (cur === id ? null : id));
+    setRiskFilter(null);
+    setControlFilter(null);
+    navigate("hallazgos");
   };
 
   const downloadReport = async () => {
@@ -245,6 +262,31 @@ export default function App() {
     } finally {
       setDownloading(false);
     }
+  };
+
+  const downloadAppendix = () => {
+    const labels: Record<TreatStatus, string> = {
+      abierto: t("treat.open"),
+      en_curso: t("treat.progress"),
+      aceptado: t("treat.accepted"),
+      corregido: t("treat.fixed"),
+    };
+    const md = appendixMarkdown(data?.alerts ?? [], labels, {
+      title: t("treat.title"),
+      owner: t("treat.owner"),
+      status: t("treat.status"),
+      due: t("treat.due"),
+      empty: t("treat.empty"),
+      note: t("treat.note"),
+    });
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "anexo-tratamiento.md";
+    a.click();
+    URL.revokeObjectURL(url);
+    notify(t("toast.downloaded", { f: "anexo-tratamiento.md" }));
   };
 
   const loadPreview = async () => {
@@ -475,6 +517,19 @@ export default function App() {
                             <Icon name="x" size={14} />
                           </button>
                         )}
+                        {moduleFilter && (
+                          <button
+                            type="button"
+                            className="btn sm ghost"
+                            onClick={() => setModuleFilter(null)}
+                            title={t("findings.clearModule")}
+                          >
+                            {t("findings.moduleChip", {
+                              a: data?.coverage?.find((row) => row.id === moduleFilter)?.area ?? moduleFilter,
+                            })}
+                            <Icon name="x" size={14} />
+                          </button>
+                        )}
                       </div>
                       {visibleAlerts.length > 0 ? (
                         <div className="findings">
@@ -492,7 +547,7 @@ export default function App() {
                             <Icon name="shieldCheck" size={28} className="accent" />
                             <h3>
                               {t(
-                                riskFilter || controlFilter
+                                riskFilter || controlFilter || moduleFilter
                                   ? "findings.emptyTitle"
                                   : scanned
                                     ? "findings.cleanTitle"
@@ -501,20 +556,21 @@ export default function App() {
                             </h3>
                             <p>
                               {t(
-                                riskFilter || controlFilter
+                                riskFilter || controlFilter || moduleFilter
                                   ? "findings.emptyText"
                                   : scanned
                                     ? "findings.cleanText"
                                     : "findings.noScanText",
                               )}
                             </p>
-                            {(riskFilter || controlFilter) && (
+                            {(riskFilter || controlFilter || moduleFilter) && (
                               <button
                                 type="button"
                                 className="btn sm"
                                 onClick={() => {
                                   setRiskFilter(null);
                                   setControlFilter(null);
+                                  setModuleFilter(null);
                                 }}
                               >
                                 {t("findings.clearFilters")}
@@ -524,6 +580,12 @@ export default function App() {
                         </div>
                       )}
                     </section>
+
+                    <CoveragePanel
+                      checks={data.coverage ?? []}
+                      active={moduleFilter}
+                      onFilter={selectCoverage}
+                    />
 
                     <section className="block" id="controles" aria-labelledby="h-controles">
                       <div className="block-head">
@@ -558,6 +620,10 @@ export default function App() {
                             >
                               <Icon name="download" size={16} />
                               {downloading ? t("report.generating") : t("report.download")}
+                            </button>
+                            <button type="button" className="btn" onClick={downloadAppendix}>
+                              <Icon name="fileCheck" size={16} />
+                              {t("treat.download")}
                             </button>
                             <button
                               type="button"

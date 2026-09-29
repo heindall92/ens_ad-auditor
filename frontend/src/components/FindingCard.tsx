@@ -3,6 +3,7 @@ import Icon from "./Icon";
 import type { GRCAlert } from "../types";
 import { RISK_FINDING_CLASS, RISK_TONE } from "../risk";
 import { useSettings } from "../settings/SettingsContext";
+import { emptyTreatment, loadTreatments, saveTreatment, treatmentKey, type TreatStatus, type Treatment } from "../treatment";
 
 interface Props {
   alert: GRCAlert;
@@ -13,7 +14,15 @@ export default function FindingCard({ alert, onControlSelect }: Props) {
   const { t } = useSettings();
   const [open, setOpen] = useState(false);
   const { finding } = alert;
+  const key = treatmentKey(alert.rule_id, finding.target);
+  const [treat, setTreat] = useState<Treatment>(() => loadTreatments()[key] ?? emptyTreatment());
   const bodyId = `f-body-${alert.rule_id}-${finding.target}`.replace(/[^\w-]/g, "_");
+
+  const updateTreat = (patch: Partial<Treatment>) => {
+    const next = { ...treat, ...patch };
+    setTreat(next);
+    saveTreatment(key, next);
+  };
 
   return (
     <article className={`finding ${RISK_FINDING_CLASS[alert.risk]}${open ? " open" : ""}`}>
@@ -108,6 +117,38 @@ export default function FindingCard({ alert, onControlSelect }: Props) {
                 <Icon name="arrowRight" size={14} />
                 <span>{alert.remediation}</span>
               </p>
+            </section>
+            <section className="f-sec">
+              <h4>{t("treat.title")}</h4>
+              <p className="muted small">{t("treat.note")}</p>
+              <div className="treat-grid">
+                <label className="fld">
+                  {t("treat.owner")}
+                  <input
+                    type="text"
+                    value={treat.owner}
+                    placeholder={t("treat.ownerPh")}
+                    autoComplete="off"
+                    onChange={(e) => updateTreat({ owner: e.target.value })}
+                  />
+                </label>
+                <label className="fld">
+                  {t("treat.status")}
+                  <select
+                    value={treat.status}
+                    onChange={(e) => updateTreat({ status: e.target.value as TreatStatus })}
+                  >
+                    <option value="abierto">{t("treat.open")}</option>
+                    <option value="en_curso">{t("treat.progress")}</option>
+                    <option value="aceptado">{t("treat.accepted")}</option>
+                    <option value="corregido">{t("treat.fixed")}</option>
+                  </select>
+                </label>
+                <label className="fld">
+                  {t("treat.due")}
+                  <input type="date" value={treat.due} onChange={(e) => updateTreat({ due: e.target.value })} />
+                </label>
+              </div>
             </section>
             {alert.references.length > 0 && (
               <section className="f-sec">

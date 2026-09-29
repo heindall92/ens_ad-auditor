@@ -46,6 +46,8 @@ def test_magerit_factors_present_on_every_rule():
 
 
 def test_run_all_without_target_is_empty():
-    findings, errors = run_all()
+    findings, errors, coverage = run_all()
     assert findings == []
     assert errors == []
+    assert coverage
+    assert all(item.status == "no_comprobado" for item in coverage)

@@ -48,7 +48,7 @@ def test_kerberos_flags_spn_and_preauth():
     assert not any("corp.example.local" in (f.target + f.detail) for f in findings)
 
 
-def test_adcs_parser_only_emits_esc1_to_esc8():
+def test_adcs_parser_emits_every_esc_key_certipy_returns():
     data = {
         "Certificate Authorities": {
             "0": {
@@ -56,7 +56,7 @@ def test_adcs_parser_only_emits_esc1_to_esc8():
                 "DNS Name": "ca.lab.test",
                 "[!] Vulnerabilities": {
                     "ESC8": "Web Enrollment is enabled",
-                    "ESC11": "should be ignored",
+                    "ESC11": "RPC encryption not required",
                 },
             }
         },
@@ -70,5 +70,5 @@ def test_adcs_parser_only_emits_esc1_to_esc8():
     }
     findings = _findings_from_output(data)
     subtypes = {f.subtype for f in findings}
-    assert subtypes == {"ESC1", "ESC8"}
+    assert subtypes == {"ESC1", "ESC8", "ESC11"}
     assert all(f.is_sample is False for f in findings)
