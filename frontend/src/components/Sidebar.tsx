@@ -3,7 +3,7 @@ import type { RiskLevel } from "../types";
 import { useSettings } from "../settings/SettingsContext";
 
 /** Scroll sections of the dashboard view. */
-export type SectionId = "panel" | "matriz" | "hallazgos" | "controles" | "informe";
+export type SectionId = "panel" | "matriz" | "hallazgos" | "cobertura" | "controles" | "informe";
 /** Stand-alone pages rendered instead of the dashboard. */
 export type PageId = "ajustes" | "ayuda" | "soporte" | "perfil";
 export type View = "dashboard" | PageId;
@@ -104,6 +104,12 @@ export default function Sidebar(props: Props) {
           onClick={() => onNavigate("matriz")}
         />
         <div className="nav-group">{t("nav.group.framework")}</div>
+        <NavItem
+          label={t("nav.coverage")}
+          icon="check"
+          current={onDash && section === "cobertura"}
+          onClick={() => onNavigate("cobertura")}
+        />
         <NavItem
           label={t("nav.controls")}
           icon="shieldCheck"

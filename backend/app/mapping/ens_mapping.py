@@ -542,6 +542,91 @@ ENS_MAPPING: Dict[FindingType, dict] = {
         "references": ["op.acc.1 Identificación"],
         "rationale": "Unir un equipo es un alta de identidad (op.acc.4 / op.acc.1).",
     },
+    FindingType.ACL_CONTROL_PATH: {
+        "risk": RiskLevel.CRITICO,
+        "impact": 5,
+        "likelihood": 4,
+        "da_path": True,
+        "controls": [
+            ("op.acc.4", True),
+            ("op.acc.2", False),
+        ],
+        "non_compliance": (
+            "Riesgo Crítico — Incumplimiento de la gestión de derechos del ENS "
+            "[op.acc.4]. La DACL del dominio concede replicación o control total "
+            "a un principal que no es una identidad de administración integrada."
+        ),
+        "remediation": (
+            "Revisar la DACL del dominio y retirar GenericAll, WriteDacl y los "
+            "derechos de replicación (Get-Changes y Get-Changes-All) que no "
+            "correspondan a controladores o al grupo de administración previsto."
+        ),
+        "references": ["op.acc.2 Requisitos de acceso"],
+        "rationale": "Una ACE de control sobre el dominio es gestión de derechos (op.acc.4).",
+    },
+    FindingType.CLEARTEXT_SECRET_ATTR: {
+        "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.5", True),
+            ("op.acc.6", False),
+        ],
+        "non_compliance": (
+            "Riesgo Alto — Incumplimiento del mecanismo de autenticación del ENS "
+            "[op.acc.5]. Hay un atributo de contraseña en claro en una cuenta. "
+            "El valor no se lee."
+        ),
+        "remediation": (
+            "Vaciar userPassword y unixUserPassword, rotar la credencial y "
+            "guardar secretos fuera del atributo de directorio."
+        ),
+        "references": ["op.acc.6 Acceso local"],
+        "rationale": "Un secreto en el directorio debilita la autenticación (op.acc.5).",
+    },
+    FindingType.GPO_WEAK_SETTING: {
+        "risk": RiskLevel.ALTO,
+        "impact": 4,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.5", True),
+            ("op.acc.6", False),
+        ],
+        "non_compliance": (
+            "Riesgo Alto — Incumplimiento del mecanismo de autenticación del ENS "
+            "[op.acc.5]. Una GPO leída en SYSVOL desactiva la firma SMB o no exige "
+            "integridad LDAP."
+        ),
+        "remediation": (
+            "Corregir la GPO para exigir firma SMB y LDAPServerIntegrity=2. "
+            "No se ha modificado la directiva desde esta herramienta."
+        ),
+        "references": ["op.acc.7 Acceso remoto"],
+        "rationale": "La GPO fija el mecanismo de autenticación del canal (op.acc.5).",
+    },
+    FindingType.AUDIT_POLICY_GAP: {
+        "risk": RiskLevel.MEDIO,
+        "impact": 3,
+        "likelihood": 3,
+        "da_path": False,
+        "controls": [
+            ("op.acc.4", True),
+        ],
+        "non_compliance": (
+            "Riesgo Medio — Incumplimiento de la gestión de derechos del ENS "
+            "[op.acc.4]. La sección de auditoría leída deja en cero eventos de "
+            "inicio de sesión o de acceso al directorio. No es un recuento estimado."
+        ),
+        "remediation": (
+            "Activar en la GPO de controladores la auditoría de inicio de sesión, "
+            "acceso al directorio y administración de cuentas. Revisar el registro "
+            "resultante en el dominio."
+        ),
+        "references": ["op.exp.8 Registro de la actividad"],
+        "rationale": "Sin registro no hay revisión de los derechos concedidos (op.acc.4).",
+    },
 }
 
 

@@ -16,7 +16,7 @@
   <img src="docs/img/readme/panel.png" alt="Panel de conformidad de ENS AD Auditor" width="880"/>
 </p>
 
-**ENS AD Auditor** revisa la configuración de un dominio de Active Directory (Kerberos, delegación, AD CS, firma SMB, política de dominio, LDAP, trusts y LAPS) y traduce cada hallazgo a un incumplimiento de los controles de acceso del Esquema Nacional de Seguridad, familia **`[op.acc]`**, con criticidad MAGERIT, descripción y remediación.
+**ENS AD Auditor** revisa la configuración de un dominio de Active Directory (Kerberos, delegación, AD CS, firma SMB, política de dominio, LDAP, trusts, LAPS, ACL del dominio, atributos de secreto y GPO leída en SYSVOL) y traduce cada hallazgo a un incumplimiento de los controles de acceso del Esquema Nacional de Seguridad, familia **`[op.acc]`**, con criticidad MAGERIT, descripción y remediación.
 
 La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a un dominio autorizado no hay alertas: `GET /api/scan` devuelve una lista vacía e `is_sample: false`. No hay escaneo sin autorización por escrito y credenciales reales.
 
@@ -40,7 +40,7 @@ La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a u
 
 ## <img src="docs/assets/icons/scan-search.svg" width="20" height="20" valign="middle"/> Cómo funciona
 
-1. **Se enumeran superficies de solo lectura**, contra un dominio autorizado. Kerberos (cuentas con SPN y sin preautenticación), delegación (no restringida, restringida y RBCD), AD CS (ESC1–ESC8), firma SMB, política de contraseñas y bloqueo, `krbtgt`, Protected Users, cuentas privilegiadas con SPN o inactivas, LDAP signing / channel binding, trusts y LAPS (solo esquema).
+1. **Se enumeran superficies de solo lectura**, contra un dominio autorizado. Kerberos (cuentas con SPN y sin preautenticación), delegación (no restringida, restringida y RBCD), AD CS (cualquier clave ESC que devuelva Certipy `find`), firma SMB, política de contraseñas y bloqueo, `krbtgt`, Protected Users, cuentas privilegiadas con SPN o inactivas, LDAP signing / channel binding, trusts, LAPS (solo esquema), ACL del dominio (DCSync, GenericAll, WriteDacl), presencia de `userPassword` / `unixUserPassword` y `GptTmpl.inf` cuando SYSVOL se puede leer.
 2. **El motor de mapeo decide el control y la criticidad.** Cada tipo de hallazgo pasa a uno o varios controles `[op.acc]`, con un control principal. El nivel ENS (Crítico, Alto, Medio o Bajo) sale del producto MAGERIT impacto × probabilidad (1–5).
 3. **El panel lo muestra como trabajo de auditoría.** KPIs, matriz MAGERIT, resumen de criticidad, filtros por severidad y por control, detalle técnico y descarga del informe en Markdown o JSON.
 
@@ -50,7 +50,7 @@ En vez de decir solo «SMB signing deshabilitado», la alerta dice, por ejemplo,
 
 ```mermaid
 flowchart LR
-    D[Dominio AD<br/>autorizado] --> E[Enumeración<br/>Kerberos · delegación · AD CS · SMB · política]
+    D[Dominio AD<br/>autorizado] --> E[Enumeración<br/>Kerberos · delegación · AD CS · SMB · política · ACL · GPO]
     E --> M[Motor ENS op.acc<br/>+ MAGERIT]
     M --> A[Alertas GRC<br/>criticidad · incumplimiento · remediación]
     A --> B[API FastAPI]
@@ -63,7 +63,7 @@ flowchart LR
 | `backend` | API FastAPI, mapeo ENS e informe | `8000` |
 | `frontend` | Panel React + TypeScript (Vite) | `5173` |
 
-La enumeración en vivo usa `ldap3` (LDAP), `impacket` (firma SMB) y `certipy-ad` (`find`, solo lectura). Las credenciales se envían en `POST /api/audit` y no se escriben en disco ni en el repositorio.
+La enumeración en vivo usa `ldap3` (LDAP), `impacket` (firma SMB y lectura de `GptTmpl.inf`) y `certipy-ad` (`find`, solo lectura). Las credenciales se envían en `POST /api/audit` y no se escriben en disco ni en el repositorio.
 
 ### <img src="docs/assets/icons/shield-check.svg" width="20" height="20" valign="middle"/> Motor de mapeo
 
@@ -76,7 +76,7 @@ La enumeración en vivo usa `ldap3` (LDAP), `impacket` (firma SMB) y `certipy-ad
 | AS-REP roasting (sin preautenticación) | `op.acc.5` / `op.acc.6` |
 | Delegación no restringida, restringida o RBCD | `op.acc.4` |
 | Privilegios excesivos | `op.acc.2` / `op.acc.4` |
-| AD CS ESC1–ESC8 | `op.acc.5` / `op.acc.4` |
+| AD CS (clave ESC devuelta por Certipy) | `op.acc.5` / `op.acc.4` |
 | Política de contraseñas / bloqueo | `op.acc.5` / `op.acc.6` |
 | krbtgt sin rotar, admin con SPN | `op.acc.5` |
 | Protected Users / cuentas privilegiadas inactivas | `op.acc.4` / `op.acc.2` |
@@ -84,8 +84,12 @@ La enumeración en vivo usa `ldap3` (LDAP), `impacket` (firma SMB) y `certipy-ad
 | Trust sin SID filtering | `op.acc.4` |
 | LAPS no desplegado | `op.acc.6` |
 | Cuota de cuentas de equipo | `op.acc.4` |
+| ACL de dominio (DCSync, GenericAll, WriteDacl) | `op.acc.4` |
+| Atributo `userPassword` / `unixUserPassword` presente | `op.acc.5` |
+| GPO con firma o integridad LDAP débil | `op.acc.5` |
+| Auditoría de directorio a cero en la GPO leída | `op.acc.4` |
 
-Controles de referencia: `op.acc.1` identificación · `op.acc.2` requisitos de acceso · `op.acc.3` segregación de funciones · `op.acc.4` gestión de derechos · `op.acc.5` mecanismo de autenticación · `op.acc.6` acceso local · `op.acc.7` acceso remoto. Marco: Real Decreto 311/2022. Las técnicas de AD CS siguen la clasificación ESC1–ESC8 de SpecterOps.
+Controles de referencia: `op.acc.1` identificación · `op.acc.2` requisitos de acceso · `op.acc.3` segregación de funciones · `op.acc.4` gestión de derechos · `op.acc.5` mecanismo de autenticación · `op.acc.6` acceso local · `op.acc.7` acceso remoto. Marco: Real Decreto 311/2022. Las técnicas de AD CS siguen la clave ESC que devuelve Certipy. La ausencia de `[Event Audit]` se cita también como `op.exp.8` en las referencias del hallazgo, sin ampliar el catálogo principal.
 
 ## <img src="docs/assets/icons/list-checks.svg" width="20" height="20" valign="middle"/> Qué incluye
 
@@ -94,9 +98,10 @@ Controles de referencia: `op.acc.1` identificación · `op.acc.2` requisitos de 
 | **Conexión** | Dominio, DC, usuario y contraseña o hash NT. Exige confirmar autorización por escrito. El secreto no se guarda. |
 | **Panel** | Alertas totales, críticas, altas y controles `[op.acc]` afectados. Resumen de criticidad del dominio. |
 | **Matriz MAGERIT** | Impacto × probabilidad (1–5). Vacía si no hay hallazgos. |
-| **Hallazgos** | Lista por riesgo, con evidencia, incumplimiento, remediación y camino a Domain Admin si aplica. |
+| **Hallazgos** | Lista por riesgo, con evidencia, incumplimiento, remediación, filtro por área y plan de tratamiento en el navegador. |
+| **Cobertura** | Cada fila de la hoja de ruta como comprobado o no comprobado. Tiering y Entra ID no se ejecutan. |
 | **Controles ENS** | Los siete `op.acc`, cuántas alertas toca cada uno y cuál es el principal. |
-| **Informe** | Markdown y JSON para el informe de auditoría. Los textos del informe salen en español. |
+| **Informe** | Markdown y JSON para el informe de auditoría, más un anexo de tratamiento. Los textos del informe salen en español. |
 | **Ajustes** | Tema claro y oscuro, acento, idioma ES/EN, densidad y reducción de movimiento. |
 | **Ayuda** | Flujo, glosario y preguntas frecuentes. |
 | **Soporte y perfil** | Formulario local (no se envía a ningún sitio) y ficha del auditor. |
@@ -160,14 +165,15 @@ El cuerpo de `POST /api/audit` es JSON: `domain`, `dc_host`, `username`, `passwo
 
 Solo para auditorías y pentests autorizados. Enumerar un Active Directory exige autorización expresa por escrito del propietario. El uso no autorizado es ilegal.
 
-La enumeración es de solo lectura: Kerberos (cuentas con SPN y sin preautenticación), delegación, plantillas AD CS ESC1–ESC8, firma SMB, política de dominio, `krbtgt`, Protected Users, LDAP, trusts y LAPS (esquema). No incluye explotación, relay, solicitud de tickets ni lectura de contraseñas LAPS.
+La enumeración es de solo lectura: Kerberos (cuentas con SPN y sin preautenticación), delegación, plantillas AD CS (claves ESC que devuelva Certipy, sin pedir certificados), firma SMB, política de dominio, `krbtgt`, Protected Users, LDAP, trusts, LAPS (esquema), ACL del dominio y `GptTmpl.inf` si SYSVOL responde. No incluye explotación, relay, solicitud de tickets, volcado de NTDS ni lectura de contraseñas LAPS. Tiering y Entra ID quedan como no comprobado.
 
 ## <img src="docs/assets/icons/info.svg" width="20" height="20" valign="middle"/> Limitaciones conocidas
 
 - **Sin credenciales, sin hallazgos.** `GET /api/scan` y `GET /api/report` no inventan datos: lista vacía e `is_sample: false`.
-- **Credenciales en la petición.** Dominio, DC, usuario y contraseña o hash NT se envían a `POST /api/audit`. No se guardan en disco, en `localStorage` ni en el repositorio.
-- **Alcance de la enumeración en vivo.** LDAP (Kerberos, delegación, política, trusts, LAPS esquema), Certipy `find` (AD CS, sin pedir certificados) e Impacket (firma SMB en el DC y hasta 48 equipos con `dNSHostName`). Un dominio grande puede dejar equipos sin comprobar en SMB.
-- **LDAP signing.** Se infiere del bind observado: si la sesión entra por LDAP sin TLS, el DC no forzó un canal íntegro. No se lee el GPO remoto para afirmar la política de todo el dominio.
+- **Credenciales en la petición.** Dominio, DC, usuario y contraseña o hash NT se envían a `POST /api/audit`. No se guardan en disco, en `localStorage` ni en el repositorio. El plan de tratamiento (responsable, estado y plazo) sí vive en el navegador y no es un hallazgo de directorio.
+- **Alcance de la enumeración en vivo.** LDAP (Kerberos, delegación, política, trusts, LAPS esquema, DACL del dominio y presencia de atributos de secreto), Certipy `find` (AD CS, sin pedir certificados) e Impacket (firma SMB en el DC y hasta 48 equipos con `dNSHostName`, y lectura de `GptTmpl.inf` en SYSVOL). Un dominio grande puede dejar equipos sin comprobar en SMB. Si SYSVOL no se lee, GPO y monitorización quedan no comprobado.
+- **LDAP signing.** El hallazgo de firma LDAP se infiere del bind observado: si la sesión entra por LDAP sin TLS, el DC no forzó un canal íntegro. Aparte, si se lee `GptTmpl.inf`, se informa `LDAPServerIntegrity` y `RequireSecuritySignature` solo con el valor visto en ese fichero.
+- **Cobertura.** Cada fila de la hoja de ruta sale como comprobado o no comprobado. Tiering y Entra ID no se ejecutan. Una fila no comprobada no cuenta como dominio limpio.
 - **LAPS.** Solo presencia de atributos de esquema y caducidad. No se leen contraseñas.
 - **Informe en español.** El selector ES/EN cambia la interfaz. Los textos de las alertas y del informe los genera el backend en español, el idioma del ENS.
 - **Sin dominio de prueba en este repositorio.** No hay cifras de un escaneo real porque no se ha auditado ningún dominio desde aquí.
@@ -189,7 +195,7 @@ ens_ad-auditor/
 │
 ├── backend/app/                  API FastAPI
 │   ├── main.py                   Endpoints (scan vacío, audit en vivo)
-│   ├── enumeration/              Kerberos, delegación, AD CS, SMB, política (ldap3, impacket, certipy-ad)
+│   ├── enumeration/              Kerberos, delegación, AD CS, SMB, política, ACL, secretos, SYSVOL (ldap3, impacket, certipy-ad)
 │   ├── mapping/ens_mapping.py    Motor ENS [op.acc]
 │   ├── mapping/magerit.py        Impacto × probabilidad y matriz
 │   └── report.py                 Informe Markdown y JSON
