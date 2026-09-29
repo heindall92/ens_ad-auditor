@@ -16,8 +16,6 @@
   <img src="docs/img/readme/panel.png" alt="Panel de conformidad de ENS AD Auditor" width="880"/>
 </p>
 
-> Proyecto del Máster en Ciberseguridad y IA (Evolve Academy) · Septiembre de 2026
-
 **ENS AD Auditor** revisa la configuración de un dominio de Active Directory (Kerberos, delegación, AD CS y firma SMB) y traduce cada hallazgo a un incumplimiento de los controles de acceso del Esquema Nacional de Seguridad, familia **`[op.acc]`**, con nivel de riesgo, descripción y remediación.
 
 La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a un dominio autorizado no hay alertas: `GET /api/scan` devuelve una lista vacía e `is_sample: false`.
