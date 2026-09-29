@@ -1,0 +1,20 @@
+# === ENS AD Auditor — dependencias del backend ===
+
+# --- Runtime del scaffold (necesarias para arrancar la API con datos de muestra) ---
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+
+# --- Dependencias de enumeración REAL (aún no usadas en el scaffold) ---
+# Se listan aquí porque son las que utilizarán los módulos de app/enumeration/
+# cuando se implemente la enumeración en vivo contra Active Directory.
+# IMPORTANTE: solo deben ejecutarse contra sistemas con autorización expresa
+# por escrito (pentest autorizado / auditoría ENS).
+#
+# ldap3        -> consultas LDAP (SPN, userAccountControl, delegación, grupos).
+# impacket     -> GetUserSPNs / GetNPUsers (Kerberoasting, AS-REP), SMB signing.
+# certipy-ad   -> enumeración y evaluación de plantillas AD CS (ESC1-ESC8).
+#
+# ldap3>=2.9
+# impacket>=0.12
+# certipy-ad>=4.8
