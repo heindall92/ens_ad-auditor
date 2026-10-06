@@ -20,6 +20,8 @@
 
 La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a un dominio autorizado no hay alertas: `GET /api/scan` devuelve una lista vacía e `is_sample: false`. No hay escaneo sin autorización por escrito y credenciales reales.
 
+Interfaz en el navegador: [https://heindall92.github.io/ens_ad-auditor/](https://heindall92.github.io/ens_ad-auditor/) (modo navegador; auditar un dominio exige el motor local y autorización por escrito).
+
 ---
 
 ## <img src="docs/assets/icons/list.svg" width="20" height="20" valign="middle"/> Índice
@@ -192,7 +194,7 @@ El alcance (ahora / después) está en [ROADMAP.md](ROADMAP.md). Las filas de «
 
 Las credenciales de la enumeración no se escriben en disco ni en el navegador. El proceso de aviso y el modelo de amenazas están en [SECURITY.md](SECURITY.md). El historial de versiones está en [CHANGELOG.md](CHANGELOG.md).
 
-La integración continua (`.github/workflows/tests.yml`) ejecuta `pytest` y el build del panel en cada *push* y *pull request*.
+La integración continua (`.github/workflows/tests.yml`) ejecuta `pytest`, el build del panel y comprueba que el build de Pages en `dist/` está al día.
 
 ## <img src="docs/assets/icons/folder-tree.svg" width="20" height="20" valign="middle"/> Estructura
 

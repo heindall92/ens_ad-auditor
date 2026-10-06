@@ -30,3 +30,9 @@ jobs:
         run: |
           npm ci
           npm run build
+      - name: Frontend (Pages)
+        working-directory: frontend
+        run: npm run build:pages
+      # Rebuild: cd frontend && npm run build:pages  (commit the updated /dist)
+      - name: dist/ al día con el código fuente
+        run: git diff --exit-code -- dist/

@@ -5,20 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="/shield.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>ENS AD Auditor, panel GRC</title>
-    <script>
-      // Aplica las preferencias guardadas antes del primer pintado (evita parpadeo
-      // de tema/acento). Deben coincidir con src/settings/SettingsContext.tsx.
-      try {
-        var r = document.documentElement, k = "ens-ad-auditor.", g = function (n) { return localStorage.getItem(k + n); };
-        var t = g("theme"), a = g("accent"), l = g("lang"), d = g("density");
-        if (t === "light" || t === "dark") r.dataset.theme = t;
-        if (/^(teal|blue|green|amber|rose|graphite)$/.test(a || "")) r.dataset.accent = a;
-        if (l === "es" || l === "en") r.lang = l;
-        if (d === "comoda" || d === "compacta") r.dataset.density = d;
-        if (g("reduceMotion") === "1") r.dataset.motion = "reduce";
-        if (g("reduceTransparency") === "1") r.dataset.transparency = "reduce";
-      } catch (e) {}
-    </script>
+    <script src="/theme-boot.js"></script>
   </head>
   <body>
     <div id="root"></div>

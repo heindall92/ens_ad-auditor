@@ -1,5 +1,17 @@
 # Cambios
 
+## 0.3.1 · octubre de 2026
+
+**GitHub Pages**
+- `index.html` en la raíz redirige a `dist/` (mismo patrón que KAIROS). `.nojekyll` evita que Jekyll toque el build.
+- `npm run build:pages` genera el panel estático con base `/ens_ad-auditor/dist/`.
+- Modo navegador: shell vacío, 0 alertas, cobertura «No comprobado» (no es un dominio limpio). El botón de enumerar queda desactivado. Hace falta el motor local.
+- «Abrir resultado JSON» lee un informe exportado por el motor, en el navegador (FileReader, sin red). Rechaza muestras y ficheros con secretos.
+- CSP estricta (`connect-src 'none'`) y `referrer: no-referrer`. Las credenciales no se almacenan.
+- CI: `pytest`, `npm run build` y fallo si `dist/` no coincide con el fuente.
+
+No se amplia la enumeración. No hay datos de demostración en el repositorio.
+
 ## 0.3.0 · octubre de 2026
 
 **Interfaz** (mismo criterio que ENS Compliance Studio, Rosetta y KAIROS)

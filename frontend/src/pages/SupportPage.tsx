@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { fetchHealth } from "../api/client";
+import { PAGES_BUILD } from "../browserMode";
 import Icon from "../components/Icon";
 import { useSettings } from "../settings/SettingsContext";
 import type { TKey } from "../settings/i18n";
@@ -28,9 +29,10 @@ export default function SupportPage({ notify, scanSummary }: Props) {
   const [message, setMessage] = useState("");
   const [attach, setAttach] = useState(true);
   const [invalid, setInvalid] = useState(false);
-  const [online, setOnline] = useState<boolean | null>(null);
+  const [online, setOnline] = useState<boolean | null>(PAGES_BUILD ? false : null);
 
   useEffect(() => {
+    if (PAGES_BUILD) return;
     let alive = true;
     fetchHealth().then((ok) => alive && setOnline(ok));
     return () => {
