@@ -25,7 +25,7 @@ export default function ProfilePage(props: Props) {
 
   return (
     <>
-      <PageHead id="page-title" eyebrow={t("pf.eyebrow")} title={t("pf.title")} lead={t("pf.lead")} />
+      <PageHead id="page-title" title={t("pf.title")} lead={t("pf.lead")} />
       <div className="grid g-side">
         <div className="card profile-card">
           <span className="avatar c-teal" style={{ ["--s" as string]: "88px" }} aria-hidden="true">

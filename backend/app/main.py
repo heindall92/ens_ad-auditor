@@ -15,6 +15,7 @@ GET  /api/report       -> Markdown report of the empty scan.
 POST /api/report       -> Markdown report of a live audit.
 GET  /api/report.json  -> JSON report of the empty scan.
 POST /api/report.json  -> JSON report of a live audit.
+GET  /api/export/studio -> Studio evidencia JSON (empty without credentials).
 
 Credentials are used only for the request and are never written to disk.
 Live enumeration is read-only (Kerberos/delegation/AD CS/SMB configuration).
@@ -36,6 +37,7 @@ from app.mapping import (
 )
 from app.models import AuditRequest, DomainSummary, RiskMatrix, ScanResponse
 from app.report import build_json_report, build_markdown_report, counts_by_risk
+from app.studio_evidencia import build_studio_evidencia
 
 app = FastAPI(
     title="ENS AD Auditor",
@@ -44,7 +46,7 @@ app = FastAPI(
         "Seguridad). Traduce hallazgos técnicos a incumplimientos [op.acc]. "
         "Solo para auditorías con autorización expresa por escrito."
     ),
-    version="0.2.0",
+    version="0.3.0",
 )
 
 app.add_middleware(
@@ -121,6 +123,7 @@ def root():
             "/api/audit",
             "/api/report",
             "/api/report.json",
+            "/api/export/studio",
         ],
         "warning": (
             "Solo auditorías autorizadas por escrito. Sin credenciales la API "
@@ -177,6 +180,12 @@ def report_markdown_live(req: AuditRequest):
         coverage=result.coverage,
     )
     return Response(content=md, media_type="text/markdown; charset=utf-8")
+
+
+@app.get("/api/export/studio")
+def export_studio_empty():
+    """No credentials: empty hallazgos list. Never fabricates evidence."""
+    return build_studio_evidencia([], domain=None)
 
 
 @app.get("/api/report.json")

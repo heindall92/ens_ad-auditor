@@ -7,7 +7,7 @@ import PageHead from "./PageHead";
 
 // Public project link; override at build time with VITE_REPO_URL.
 const REPO_URL: string = import.meta.env.VITE_REPO_URL ?? "https://github.com/heindall92/ens_ad-auditor";
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 
 type Category = "bug" | "mapping" | "idea";
 const CATEGORIES: [Category, TKey][] = [
@@ -54,7 +54,7 @@ export default function SupportPage({ notify, scanSummary }: Props) {
 
   return (
     <>
-      <PageHead id="page-title" eyebrow={t("sup.eyebrow")} title={t("sup.title")} lead={t("sup.lead")} />
+      <PageHead id="page-title" title={t("sup.title")} lead={t("sup.lead")} />
       <div className="grid g-main">
         <form className="card support-form" onSubmit={submit} noValidate aria-labelledby="sup-h-form">
           <div className="card-head">

@@ -8,6 +8,42 @@ import PageHead from "./PageHead";
 
 type Tab = "flow" | "glossary" | "faq" | "about";
 
+const SUITE: {
+  id: "here" | "studio" | "rosetta" | "kairos";
+  name: string;
+  descKey: TKey;
+  app?: string;
+  repo: string;
+}[] = [
+  {
+    id: "here",
+    name: "ENS AD Auditor",
+    descKey: "help.suite.here",
+    repo: "https://github.com/heindall92/ens_ad-auditor",
+  },
+  {
+    id: "studio",
+    name: "ENS Compliance Studio",
+    descKey: "help.suite.studio",
+    app: "https://heindall92.github.io/grc_ens_compliance_studio/app/dist/ens-compliance-studio.html",
+    repo: "https://github.com/heindall92/grc_ens_compliance_studio",
+  },
+  {
+    id: "rosetta",
+    name: "Rosetta",
+    descKey: "help.suite.rosetta",
+    app: "https://heindall92.github.io/rosetta_multinorma/",
+    repo: "https://github.com/heindall92/rosetta_multinorma",
+  },
+  {
+    id: "kairos",
+    name: "KAIROS",
+    descKey: "help.suite.kairos",
+    app: "https://heindall92.github.io/kairos/",
+    repo: "https://github.com/heindall92/kairos",
+  },
+];
+
 const TABS: [Tab, TKey, IconName][] = [
   ["flow", "help.tab.flow", "layers"],
   ["glossary", "help.tab.glossary", "book"],
@@ -46,7 +82,7 @@ export default function HelpPage({ onGo }: Props) {
 
   return (
     <>
-      <PageHead id="page-title" eyebrow={t("help.eyebrow")} title={t("help.title")} lead={t("help.lead")} />
+      <PageHead id="page-title" title={t("help.title")} lead={t("help.lead")} />
       <div className="help-layout">
         <nav className="help-nav" aria-label={t("help.tabs")}>
           {TABS.map(([id, key, ic]) => (
@@ -154,13 +190,42 @@ export default function HelpPage({ onGo }: Props) {
           )}
 
           {tab === "about" && (
-            <div className="about">
-              {c.about.map((p, i) => (
-                <p key={i} className={i === 0 ? "about-lead" : undefined}>
-                  {p}
-                </p>
-              ))}
-            </div>
+            <>
+              <div className="about">
+                {c.about.map((p, i) => (
+                  <p key={i} className={i === 0 ? "about-lead" : undefined}>
+                    {p}
+                  </p>
+                ))}
+              </div>
+              <section className="suite" aria-labelledby="suite-h">
+                <h3 id="suite-h">{t("help.suite.title")}</h3>
+                <p className="muted small">{t("help.suite.lead")}</p>
+                <div className="suite-grid">
+                  {SUITE.map((tool) => (
+                    <article key={tool.id} className={`suite-card${tool.id === "here" ? " here" : ""}`}>
+                      <div className="suite-hd">
+                        <b>{tool.name}</b>
+                        {tool.id === "here" && <span className="badge accent">{t("help.suite.hereBadge")}</span>}
+                      </div>
+                      <p>{t(tool.descKey)}</p>
+                      <div className="row">
+                        {tool.app && (
+                          <a className="btn sm" href={tool.app} target="_blank" rel="noopener noreferrer">
+                            <Icon name="external" size={14} />
+                            {t("help.suite.open")}
+                          </a>
+                        )}
+                        <a className="btn sm" href={tool.repo} target="_blank" rel="noopener noreferrer">
+                          <Icon name="code" size={14} />
+                          {t("help.suite.code")}
+                        </a>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            </>
           )}
         </div>
       </div>
