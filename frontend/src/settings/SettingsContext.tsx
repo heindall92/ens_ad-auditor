@@ -29,8 +29,8 @@ interface SettingsContextValue extends Settings {
   locale: string;
 }
 
-// Storage keys. The theme key predates this module and is also read by the
-// inline script in index.html to avoid a flash of the wrong theme.
+// Storage keys. The theme key predates this module and is also read by
+// public/theme-boot.js to avoid a flash of the wrong theme.
 const KEY = {
   theme: "ens-ad-auditor.theme",
   accent: "ens-ad-auditor.accent",

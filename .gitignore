@@ -1,6 +1,6 @@
 # dependencias y builds
 node_modules/
-dist/
+frontend/dist/
 backend/.venv/
 __pycache__/
 *.pyc

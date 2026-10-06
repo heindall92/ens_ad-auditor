@@ -1,7 +1,9 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import Icon from "./Icon";
 import { useSettings } from "../settings/SettingsContext";
 import type { AuditRequest } from "../types";
+
+const INSTALL_URL = "https://github.com/heindall92/ens_ad-auditor#arranque-r%C3%A1pido";
 
 export interface ConnectionDraft {
   domain: string;
@@ -41,6 +43,11 @@ interface Props {
   loading: boolean;
   onSubmit: () => void;
   onClear: () => void;
+  browserMode?: boolean;
+  jsonFileName?: string | null;
+  jsonError?: string | null;
+  onOpenJson?: (file: File) => void;
+  onClearJson?: () => void;
 }
 
 export default function ConnectionForm({
@@ -51,15 +58,97 @@ export default function ConnectionForm({
   loading,
   onSubmit,
   onClear,
+  browserMode = false,
+  jsonFileName = null,
+  jsonError = null,
+  onOpenJson,
+  onClearJson,
 }: Props) {
   const { t } = useSettings();
   const [showForm, setShowForm] = useState(!connectedDomain);
+  const fileRef = useRef<HTMLInputElement>(null);
   const set = (patch: Partial<ConnectionDraft>) => onChange({ ...draft, ...patch });
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
+    if (browserMode) return;
     onSubmit();
   };
+
+  const pickJson = () => fileRef.current?.click();
+  const onFile = (file: File | undefined) => {
+    if (file && onOpenJson) onOpenJson(file);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  if (browserMode) {
+    return (
+      <section className="card connect-card" aria-labelledby="conn-h">
+        <div className="card-head">
+          <h3 id="conn-h">{t("conn.title")}</h3>
+          <span className="badge neutral">
+            <span className="dot" />
+            {t("conn.browserBadge")}
+          </span>
+        </div>
+        <p className="muted small">{t("conn.browserLead")}</p>
+        <div className="alert warn connect-legal" role="note">
+          <Icon name="info" size={18} />
+          <div>
+            <b>{t("conn.browserEngineBold")}</b>
+            <p>
+              {t("conn.browserEngine")}{" "}
+              <a href={INSTALL_URL} target="_blank" rel="noopener noreferrer">
+                {t("conn.browserInstall")}
+                <Icon name="external" size={13} />
+              </a>
+            </p>
+          </div>
+        </div>
+        {jsonFileName && (
+          <p className="muted small">
+            <code>{jsonFileName}</code>
+            {" · "}
+            {t("conn.jsonLoaded")}
+          </p>
+        )}
+        {jsonError && (
+          <div className="alert crit" role="alert">
+            <Icon name="alert" size={18} />
+            <span className="spacer">{jsonError}</span>
+          </div>
+        )}
+        <input
+          ref={fileRef}
+          className="sr-only"
+          type="file"
+          accept="application/json,.json"
+          tabIndex={-1}
+          aria-hidden="true"
+          onChange={(e) => onFile(e.target.files?.[0])}
+        />
+        <div className="form-foot">
+          <span className="muted small">{t("conn.browserNosave")}</span>
+          <div className="row">
+            <button type="button" className="btn" onClick={pickJson}>
+              <Icon name="folderOpen" size={15} />
+              {t("conn.openJson")}
+            </button>
+            {jsonFileName && onClearJson && (
+              <button type="button" className="btn ghost" onClick={onClearJson}>
+                <Icon name="x" size={15} />
+                {t("conn.jsonClear")}
+              </button>
+            )}
+            <button type="button" className="btn primary" disabled>
+              <Icon name="lock" size={15} />
+              {t("conn.submit")}
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (connectedDomain && !showForm) {
     return (

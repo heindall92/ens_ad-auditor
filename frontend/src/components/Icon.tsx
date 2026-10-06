@@ -13,6 +13,7 @@ import {
   Eye,
   FileCheck,
   Flag,
+  FolderOpen,
   Globe,
   Info,
   KeyRound,
@@ -78,6 +79,7 @@ const ICONS = {
   code: Code,
   monitor: Monitor,
   trash: Trash2,
+  folderOpen: FolderOpen,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

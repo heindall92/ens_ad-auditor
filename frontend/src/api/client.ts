@@ -1,3 +1,4 @@
+import { PAGES_BUILD } from "../browserMode";
 import type { AuditRequest, ControlsCatalog, ScanResponse } from "../types";
 
 const API_BASE: string = import.meta.env.VITE_API_BASE ?? "";
@@ -62,6 +63,7 @@ export function fetchControls(): Promise<ControlsCatalog> {
 }
 
 export async function fetchHealth(): Promise<boolean> {
+  if (PAGES_BUILD) return false;
   try {
     const res = await fetch(`${API_BASE}/api/health`);
     return res.ok;

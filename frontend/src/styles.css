@@ -867,6 +867,8 @@ body { background: var(--bg); }
 .connect-card .connect-legal { margin: 12px 0 16px; }
 .connect-card .form-grid { margin-top: 4px; }
 .connect-legal p { margin: 4px 0 0; font-size: .84rem; }
+.connect-legal a { color: var(--accent); display: inline-flex; align-items: center; gap: 4px; }
+.connect-card .form-foot .row { justify-content: flex-end; }
 .err-list { margin: 6px 0 0; padding-left: 1.1em; font-size: .84rem; }
 .err-list li { margin: 2px 0; }
 .cov-detail { color: var(--ink-2); font-size: .84rem; max-width: 42rem; }

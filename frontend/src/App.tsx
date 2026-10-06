@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchControls, fetchMarkdownReport, fetchScan, runAudit } from "./api/client";
+import { PAGES_BUILD } from "./browserMode";
 import ConnectionForm, { EMPTY_DRAFT, draftToRequest, type ConnectionDraft } from "./components/ConnectionForm";
+import { emptyScan, LOCAL_CONTROLS } from "./emptyScan";
+import { buildMarkdownReport } from "./reportMarkdown";
+import { JSON_FILE_MAX_BYTES, parseScanJson, type ScanParseError } from "./scanSchema";
 import CoveragePanel from "./components/CoveragePanel";
 import ControlsTable, { buildControlStats } from "./components/ControlsTable";
 import CriticalitySummary from "./components/CriticalitySummary";
@@ -62,9 +66,11 @@ function scrollToSection(target: SectionId) {
 
 export default function App() {
   const { t, locale } = useSettings();
-  const [data, setData] = useState<ScanResponse | null>(null);
-  const [catalog, setCatalog] = useState<Record<string, string> | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<ScanResponse | null>(PAGES_BUILD ? emptyScan() : null);
+  const [catalog, setCatalog] = useState<Record<string, string> | null>(
+    PAGES_BUILD ? LOCAL_CONTROLS.controls : null,
+  );
+  const [loading, setLoading] = useState(!PAGES_BUILD);
   const [error, setError] = useState<string | null>(null);
   const [riskFilter, setRiskFilter] = useState<RiskLevel | null>(null);
   const [controlFilter, setControlFilter] = useState<string | null>(null);
@@ -79,6 +85,9 @@ export default function App() {
   const [initialSettled, setInitialSettled] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
   const [draft, setDraft] = useState<ConnectionDraft>(EMPTY_DRAFT);
+  const [browserMode, setBrowserMode] = useState(PAGES_BUILD);
+  const [jsonFileName, setJsonFileName] = useState<string | null>(null);
+  const [jsonError, setJsonError] = useState<string | null>(null);
   const sessionRef = useRef<AuditRequest | null>(null);
   const firstLoad = useRef(true);
   const pendingScroll = useRef<SectionId | null>(null);
@@ -93,21 +102,55 @@ export default function App() {
     document.body.classList.toggle("drawer-open", drawerOpen);
   }, [drawerOpen]);
 
+  const jsonErrorText = useCallback((code: ScanParseError, detail?: string) => {
+    const keys: Record<ScanParseError, TKey> = {
+      invalid_json: "json.invalid_json",
+      not_object: "json.not_object",
+      sample: "json.sample",
+      credentials: "json.credentials",
+      schema: "json.schema",
+      too_large: "json.too_large",
+    };
+    const base = tRef.current(keys[code]);
+    return detail ? `${base} (${detail})` : base;
+  }, []);
+
+  const applyEmpty = useCallback(() => {
+    setData(emptyScan());
+    setCatalog((cur) => cur ?? LOCAL_CONTROLS.controls);
+    setPreview(null);
+    setJsonFileName(null);
+    setJsonError(null);
+    sessionRef.current = null;
+  }, []);
+
   const loadEmpty = useCallback(async () => {
     setLoading(true);
     setError(null);
+    if (PAGES_BUILD) {
+      applyEmpty();
+      setBrowserMode(true);
+      firstLoad.current = false;
+      setLoading(false);
+      setInitialSettled(true);
+      return;
+    }
     try {
       const res = await fetchScan();
       setData(res);
       setPreview(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : tRef.current("common.unknownError"));
+      setBrowserMode(false);
+      setJsonFileName(null);
+      setJsonError(null);
+    } catch {
+      applyEmpty();
+      setBrowserMode(true);
     } finally {
       firstLoad.current = false;
       setLoading(false);
       setInitialSettled(true);
     }
-  }, []);
+  }, [applyEmpty]);
 
   const auditWith = useCallback(
     async (req: AuditRequest) => {
@@ -148,10 +191,47 @@ export default function App() {
 
   useEffect(() => {
     loadEmpty();
+    if (PAGES_BUILD) {
+      setCatalog(LOCAL_CONTROLS.controls);
+      return;
+    }
     fetchControls()
       .then((c) => setCatalog(c.controls))
-      .catch(() => setCatalog(null));
+      .catch(() => setCatalog(LOCAL_CONTROLS.controls));
   }, [loadEmpty]);
+
+  const openJsonFile = useCallback(
+    (file: File) => {
+      if (file.size > JSON_FILE_MAX_BYTES) {
+        setJsonError(jsonErrorText("too_large"));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = typeof reader.result === "string" ? reader.result : "";
+        const parsed = parseScanJson(text);
+        if (!parsed.ok) {
+          setJsonError(jsonErrorText(parsed.error, parsed.detail));
+          return;
+        }
+        setData(parsed.data);
+        setCatalog((cur) => cur ?? LOCAL_CONTROLS.controls);
+        setPreview(null);
+        setJsonFileName(file.name);
+        setJsonError(null);
+        setError(null);
+        notify(tRef.current("toast.jsonOpened", { f: file.name }));
+      };
+      reader.onerror = () => setJsonError(jsonErrorText("invalid_json"));
+      reader.readAsText(file);
+    },
+    [jsonErrorText, notify],
+  );
+
+  const clearJsonFile = useCallback(() => {
+    applyEmpty();
+    setBrowserMode(true);
+  }, [applyEmpty]);
 
   // Track the section in view to highlight the nav item and breadcrumb (dashboard only).
   useEffect(() => {
@@ -242,18 +322,26 @@ export default function App() {
     navigate("hallazgos");
   };
 
+  const saveMarkdown = (md: string) => {
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "informe-ens-ad-auditor.md";
+    a.click();
+    URL.revokeObjectURL(url);
+    notify(t("toast.downloaded", { f: "informe-ens-ad-auditor.md" }));
+  };
+
   const downloadReport = async () => {
     setDownloading(true);
     try {
+      if (browserMode) {
+        saveMarkdown(buildMarkdownReport(data ?? emptyScan()));
+        return;
+      }
       const md = await fetchMarkdownReport(sessionRef.current ?? undefined);
-      const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "informe-ens-ad-auditor.md";
-      a.click();
-      URL.revokeObjectURL(url);
-      notify(t("toast.downloaded", { f: "informe-ens-ad-auditor.md" }));
+      saveMarkdown(md);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("err.report"));
     } finally {
@@ -302,6 +390,10 @@ export default function App() {
   const loadPreview = async () => {
     setPreviewLoading(true);
     try {
+      if (browserMode) {
+        setPreview(buildMarkdownReport(data ?? emptyScan()));
+        return;
+      }
       setPreview(await fetchMarkdownReport(sessionRef.current ?? undefined));
     } catch (e) {
       setError(e instanceof Error ? e.message : t("err.report"));
@@ -395,11 +487,16 @@ export default function App() {
                 <ConnectionForm
                   draft={draft}
                   onChange={setDraft}
-                  connectedDomain={scanned ? data?.domain ?? null : null}
-                  connectedUser={scanned ? sessionRef.current?.username ?? null : null}
+                  connectedDomain={scanned && !browserMode ? data?.domain ?? null : null}
+                  connectedUser={scanned && !browserMode ? sessionRef.current?.username ?? null : null}
                   loading={loading}
                   onSubmit={submitAudit}
                   onClear={clearSession}
+                  browserMode={browserMode}
+                  jsonFileName={jsonFileName}
+                  jsonError={jsonError}
+                  onOpenJson={openJsonFile}
+                  onClearJson={clearJsonFile}
                 />
 
                 {error && (
@@ -664,7 +761,7 @@ export default function App() {
                           ) : (
                             <div className="empty-state">
                               <Icon name="book" size={26} className="muted" />
-                              <p>{t("report.previewEmpty")}</p>
+                              <p>{t(browserMode ? "report.previewEmptyLocal" : "report.previewEmpty")}</p>
                             </div>
                           )}
                         </div>
