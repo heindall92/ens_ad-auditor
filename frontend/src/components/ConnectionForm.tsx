@@ -123,7 +123,8 @@ export default function ConnectionForm({
           className="sr-only"
           type="file"
           accept="application/json,.json"
-          aria-label={t("conn.openJson")}
+          tabIndex={-1}
+          aria-hidden="true"
           onChange={(e) => onFile(e.target.files?.[0])}
         />
         <div className="form-foot">

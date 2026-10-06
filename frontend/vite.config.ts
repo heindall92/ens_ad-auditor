@@ -19,7 +19,6 @@ const PAGES_CSP = [
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",
-  "frame-ancestors 'none'",
   "worker-src 'none'",
   "manifest-src 'none'",
 ].join("; ");
