@@ -32,6 +32,7 @@ La regla del proyecto es sencilla: **ningún dato inventado**. Sin conexión a u
 - [Aviso](#aviso)
 - [Limitaciones conocidas](#limitaciones-conocidas)
 - [Hoja de ruta](#hoja-de-ruta)
+- [Seguridad](#seguridad)
 - [Estructura](#estructura)
 - [Licencia](#licencia)
 - [Autor](#autor)
@@ -101,11 +102,11 @@ Controles de referencia: `op.acc.1` identificación · `op.acc.2` requisitos de 
 | **Hallazgos** | Lista por riesgo, con evidencia, incumplimiento, remediación, filtro por área y plan de tratamiento en el navegador. |
 | **Cobertura** | Cada fila de la hoja de ruta como comprobado o no comprobado. Tiering y Entra ID no se ejecutan. |
 | **Controles ENS** | Los siete `op.acc`, cuántas alertas toca cada uno y cuál es el principal. |
-| **Informe** | Markdown y JSON para el informe de auditoría, más un anexo de tratamiento. Los textos del informe salen en español. |
+| **Informe** | Markdown y JSON para el informe de auditoría, más un anexo de tratamiento. Exportación opcional a evidencia técnica de ENS Compliance Studio, vacía si no hay alertas. Los textos del informe salen en español. |
 | **Ajustes** | Tema claro y oscuro, acento, idioma ES/EN, densidad y reducción de movimiento. |
-| **Ayuda** | Flujo, glosario y preguntas frecuentes. |
+| **Ayuda** | Flujo, glosario, preguntas frecuentes y enlaces a Studio, Rosetta y KAIROS. |
 | **Soporte y perfil** | Formulario local (no se envía a ningún sitio) y ficha del auditor. |
-| **Arranque** | Vídeo de intro de 10 segundos. Con movimiento reducido, un splash estático. |
+| **Arranque** | Splash estático: logo, nombre y barra. Con movimiento reducido, sin transiciones. |
 | **Móvil** | Por debajo de 900 px, barra inferior y hoja «Más». Sin menú lateral. |
 
 Las preferencias se guardan en el `localStorage` de este navegador. No se envían al backend.
@@ -162,7 +163,7 @@ El panel queda en `http://localhost:5173` y hace de proxy de `/api` hacia `http:
 | Auditoría en vivo | `POST http://127.0.0.1:8000/api/audit` |
 | Informe | `GET` o `POST http://127.0.0.1:8000/api/report` |
 
-Otros endpoints: `GET|POST /api/report.json` · `GET /api/controls` · `GET /api/mapping` · `GET /api/health`.
+Otros endpoints: `GET|POST /api/report.json` · `GET /api/export/studio` · `GET /api/controls` · `GET /api/mapping` · `GET /api/health`.
 
 El cuerpo de `POST /api/audit` es JSON: `domain`, `dc_host`, `username`, `password` o `nthash`, y `authorized: true`. Sin `authorized` la API rechaza la petición. El secreto no se registra.
 
@@ -174,7 +175,7 @@ La enumeración es de solo lectura: Kerberos (cuentas con SPN y sin preautentica
 
 ## <img src="docs/assets/icons/info.svg" width="20" height="20" valign="middle"/> Limitaciones conocidas
 
-- **Sin credenciales, sin hallazgos.** `GET /api/scan` y `GET /api/report` no inventan datos: lista vacía e `is_sample: false`.
+- **Sin credenciales, sin hallazgos.** `GET /api/scan`, `GET /api/report` y `GET /api/export/studio` no inventan datos: lista vacía e `is_sample: false`.
 - **Credenciales en la petición.** Dominio, DC, usuario y contraseña o hash NT se envían a `POST /api/audit`. No se guardan en disco, en `localStorage` ni en el repositorio. El plan de tratamiento (responsable, estado y plazo) sí vive en el navegador y no es un hallazgo de directorio.
 - **Alcance de la enumeración en vivo.** LDAP (Kerberos, delegación, política, trusts, LAPS esquema, DACL del dominio y presencia de atributos de secreto), Certipy `find` (AD CS, sin pedir certificados) e Impacket (firma SMB en el DC y hasta 48 equipos con `dNSHostName`, y lectura de `GptTmpl.inf` en SYSVOL). Un dominio grande puede dejar equipos sin comprobar en SMB. Si SYSVOL no se lee, GPO y monitorización quedan no comprobado.
 - **LDAP signing.** El hallazgo de firma LDAP se infiere del bind observado: si la sesión entra por LDAP sin TLS, el DC no forzó un canal íntegro. Aparte, si se lee `GptTmpl.inf`, se informa `LDAPServerIntegrity` y `RequireSecuritySignature` solo con el valor visto en ese fichero.
@@ -186,6 +187,12 @@ La enumeración es de solo lectura: Kerberos (cuentas con SPN y sin preautentica
 ## <img src="docs/assets/icons/map.svg" width="20" height="20" valign="middle"/> Hoja de ruta
 
 El alcance (ahora / después) está en [ROADMAP.md](ROADMAP.md). Las filas de «Después» no se simulan.
+
+## <img src="docs/assets/icons/shield-check.svg" width="20" height="20" valign="middle"/> Seguridad
+
+Las credenciales de la enumeración no se escriben en disco ni en el navegador. El proceso de aviso y el modelo de amenazas están en [SECURITY.md](SECURITY.md). El historial de versiones está en [CHANGELOG.md](CHANGELOG.md).
+
+La integración continua (`.github/workflows/tests.yml`) ejecuta `pytest` y el build del panel en cada *push* y *pull request*.
 
 ## <img src="docs/assets/icons/folder-tree.svg" width="20" height="20" valign="middle"/> Estructura
 
@@ -199,16 +206,19 @@ ens_ad-auditor/
 │   └── api/                      Cliente de la API
 │
 ├── backend/app/                  API FastAPI
-│   ├── main.py                   Endpoints (scan vacío, audit en vivo)
+│   ├── main.py                   Endpoints (scan vacío, audit en vivo, export Studio vacío)
 │   ├── enumeration/              Kerberos, delegación, AD CS, SMB, política, ACL, secretos, SYSVOL (ldap3, impacket, certipy-ad)
 │   ├── mapping/ens_mapping.py    Motor ENS [op.acc]
 │   ├── mapping/magerit.py        Impacto × probabilidad y matriz
+│   ├── studio_evidencia.py       Adaptador JSON para evidencia técnica de Studio
 │   └── report.py                 Informe Markdown y JSON
 │
-├── backend/tests/                Pruebas del mapeo, MAGERIT, política y API
+├── backend/tests/                Pruebas del mapeo, MAGERIT, política, API y export Studio
+├── .github/workflows/tests.yml   pytest + build del panel
+├── SECURITY.md                   Credenciales: no se almacenan
+├── CHANGELOG.md                  Historial de versiones
 ├── ROADMAP.md                    Roadmap de auditoría (ahora / después)
 ├── docs/img/readme/              Capturas de este README
-├── frontend/public/intro.mp4     Intro de arranque (10 s)
 └── LICENSE                       GPLv2
 ```
 
@@ -217,6 +227,8 @@ ens_ad-auditor/
 Distribuido bajo licencia [GPLv2](LICENSE) · © 2026 Yoandy Ramírez Delgado.
 
 Componentes de terceros: FastAPI (MIT), React (MIT), Vite (MIT). Iconografía de la consola y de este README: [Lucide](https://lucide.dev) (ISC).
+
+Otras herramientas GRC del autor: [ENS Compliance Studio](https://github.com/heindall92/grc_ens_compliance_studio) (categorización, riesgos MAGERIT y Declaración de Aplicabilidad), [Rosetta](https://github.com/heindall92/rosetta_multinorma) (ENS, ISO/IEC 27001, NIS2 e ISO/IEC 42001) y [KAIROS](https://github.com/heindall92/kairos) (continuidad de negocio: BIA, BCP y DRP).
 
 ## <img src="docs/assets/icons/user.svg" width="20" height="20" valign="middle"/> Autor
 

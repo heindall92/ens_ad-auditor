@@ -46,7 +46,6 @@ const es = {
   "top.profile": "Perfil",
 
   // Dashboard
-  "dash.eyebrow": "Auditoría de Active Directory · ENS [op.acc]",
   "dash.title": "Panel de conformidad",
   "dash.lead":
     "Alertas GRC del escaneo de Active Directory, ligadas a los controles de acceso del ENS.",
@@ -155,6 +154,9 @@ const es = {
   "report.cardText":
     "Resumen y detalle de cada alerta: objetivo, controles ENS, incumplimiento, remediación y evidencia. Sirve para el informe de auditoría.",
   "report.download": "Descargar informe",
+  "report.studio": "Exportar evidencia para Studio",
+  "report.studioText":
+    "JSON para Evidencia técnica de ENS Compliance Studio. Sale de las alertas de esta enumeración. Si no hay alertas, el fichero va vacío.",
   "report.generating": "Generando…",
   "report.preview": "Vista previa",
   "report.refreshPreview": "Actualizar vista previa",
@@ -203,7 +205,6 @@ const es = {
   "ct.barTitle": "{n} de {t} alertas",
 
   // Settings
-  "set.eyebrow": "Preferencias",
   "set.title": "Ajustes",
   "set.lead":
     "Cambia el aspecto. Se ve al momento y se guarda en este navegador.",
@@ -224,10 +225,10 @@ const es = {
   "set.a11y": "Accesibilidad",
   "set.motion": "Reducir animaciones",
   "set.motionDesc":
-    "Quita la animación de inicio y las transiciones. Si el sistema pide menos movimiento, se respeta siempre.",
+    "Quita las transiciones y deja la barra de arranque fija. Si el sistema pide menos movimiento, se respeta siempre.",
   "set.transparency": "Reducir transparencia",
   "set.transparencyDesc":
-    "Cambia el cristal por fondos opacos, para que se lea mejor. Si el sistema lo pide, se aplica solo.",
+    "Quita el cristal de barras y menús y deja fondos opacos. Si el sistema lo pide, se aplica solo.",
   "set.data": "Datos y privacidad",
   "set.storage": "Almacenamiento local",
   "set.storageDesc":
@@ -247,7 +248,6 @@ const es = {
   "lang.en": "English",
 
   // Help
-  "help.eyebrow": "Centro de ayuda",
   "help.title": "Ayuda",
   "help.lead":
     "Cómo funciona el auditor, qué hace cada técnica sobre Active Directory y a qué control [op.acc] del ENS corresponde.",
@@ -260,9 +260,18 @@ const es = {
   "help.noResults": "Sin resultados.",
   "help.go": "Ir",
   "help.flowAria": "Flujo de información del auditor",
+  "help.suite.title": "Otras herramientas GRC",
+  "help.suite.lead":
+    "ENS Compliance Studio prepara la conformidad con el ENS. Rosetta relaciona marcos. KAIROS cubre la continuidad. Este auditor aporta evidencias [op.acc] de Active Directory.",
+  "help.suite.here": "Enumeración de solo lectura de Active Directory, mapeada a [op.acc] con criticidad MAGERIT.",
+  "help.suite.studio": "Categorización, riesgos MAGERIT, Declaración de Aplicabilidad y preauditoría del ENS.",
+  "help.suite.rosetta": "Mapa multinorma ENS · ISO/IEC 27001 · NIS2 · ISO/IEC 42001.",
+  "help.suite.kairos": "Continuidad de negocio: BIA, BCP y DRP con la ruta crítica de recuperación.",
+  "help.suite.hereBadge": "Estás aquí",
+  "help.suite.open": "Abrir",
+  "help.suite.code": "Código",
 
   // Support
-  "sup.eyebrow": "Asistencia",
   "sup.title": "Soporte",
   "sup.lead":
     "¿Algo no cuadra en un hallazgo o en el mapeo ENS? Cuéntanos qué ha pasado y revisa los recursos del proyecto.",
@@ -299,7 +308,6 @@ const es = {
     "Sin credenciales la API no inventa hallazgos. La enumeración en vivo es de solo lectura y exige el acuse de autorización por escrito.",
 
   // Profile
-  "pf.eyebrow": "Cuenta",
   "pf.title": "Panel de usuario",
   "pf.lead": "Qué hay en este escaneo, y atajos para cambiar el aspecto.",
   "pf.findings": "hallazgos",
@@ -322,11 +330,7 @@ const es = {
 
   // Splash
   "splash.sub": "Auditoría de Active Directory · ENS [op.acc]",
-  "splash.loading": "Cargando el panel de conformidad",
-  "splash.s1": "Cargando el panel…",
-  "splash.s2": "Cargando el motor de mapeo ENS…",
-  "splash.s3": "Preparando alertas GRC…",
-  "splash.s4": "Preparando el informe…",
+  "splash.loading": "Cargando el panel",
 } as const;
 
 export type TKey = keyof typeof es;
@@ -370,7 +374,6 @@ const en: Record<TKey, string> = {
   "top.help": "Help",
   "top.profile": "Profile",
 
-  "dash.eyebrow": "Active Directory audit · ENS [op.acc]",
   "dash.title": "Compliance dashboard",
   "dash.lead":
     "GRC alerts from the Active Directory scan, mapped to ENS access controls.",
@@ -478,6 +481,9 @@ const en: Record<TKey, string> = {
   "report.cardText":
     "Summary and detail for each alert: target, ENS controls, the gap, the fix, and the evidence. Use it in the audit report.",
   "report.download": "Download report",
+  "report.studio": "Export evidence for Studio",
+  "report.studioText":
+    "JSON for ENS Compliance Studio technical evidence. Built from this enumeration's alerts. If there are no alerts, the file is empty.",
   "report.generating": "Generating…",
   "report.preview": "Preview",
   "report.refreshPreview": "Refresh preview",
@@ -522,7 +528,6 @@ const en: Record<TKey, string> = {
   "ct.none": "No alerts",
   "ct.barTitle": "{n} of {t} alerts",
 
-  "set.eyebrow": "Preferences",
   "set.title": "Settings",
   "set.lead": "Change how it looks. Updates right away and stays in this browser.",
   "set.appearance": "Appearance",
@@ -542,10 +547,10 @@ const en: Record<TKey, string> = {
   "set.a11y": "Accessibility",
   "set.motion": "Reduce motion",
   "set.motionDesc":
-    "Turns off the splash animation and the transitions. If the OS asks for less motion, that always wins.",
+    "Turns off transitions and keeps the splash bar still. If the OS asks for less motion, that always wins.",
   "set.transparency": "Reduce transparency",
   "set.transparencyDesc":
-    "Swaps the glass effect for solid backgrounds so text is easier to read. Turns on by itself if the OS asks for it.",
+    "Turns off glass on bars and menus and uses solid backgrounds. Turns on by itself if the OS asks for it.",
   "set.data": "Data & privacy",
   "set.storage": "Local storage",
   "set.storageDesc": "Preferences are stored only in this browser's localStorage. Nothing is sent to the backend.",
@@ -562,7 +567,6 @@ const en: Record<TKey, string> = {
   "lang.es": "Español",
   "lang.en": "English",
 
-  "help.eyebrow": "Help centre",
   "help.title": "Help",
   "help.lead":
     "How the auditor works, what each Active Directory technique does, and which ENS [op.acc] control it hits.",
@@ -575,8 +579,17 @@ const en: Record<TKey, string> = {
   "help.noResults": "No results.",
   "help.go": "Go",
   "help.flowAria": "Auditor information flow",
+  "help.suite.title": "Other GRC tools",
+  "help.suite.lead":
+    "ENS Compliance Studio prepares ENS conformity. Rosetta maps frameworks. KAIROS covers continuity. This auditor supplies [op.acc] evidence from Active Directory.",
+  "help.suite.here": "Read-only Active Directory enumeration, mapped to [op.acc] with MAGERIT rating.",
+  "help.suite.studio": "Categorisation, MAGERIT risks, Statement of Applicability and ENS pre-audit.",
+  "help.suite.rosetta": "Multi-framework map: ENS · ISO/IEC 27001 · NIS2 · ISO/IEC 42001.",
+  "help.suite.kairos": "Business continuity: BIA, BCP and DRP with the critical recovery path.",
+  "help.suite.hereBadge": "You are here",
+  "help.suite.open": "Open",
+  "help.suite.code": "Code",
 
-  "sup.eyebrow": "Assistance",
   "sup.title": "Support",
   "sup.lead":
     "Something off in a finding or in the ENS mapping? Tell us what happened and check the project resources.",
@@ -612,7 +625,6 @@ const en: Record<TKey, string> = {
   "sup.legalEmpty":
     "With no credentials the API invents no findings. Live enumeration is read-only and requires acknowledgement of written authorisation.",
 
-  "pf.eyebrow": "Account",
   "pf.title": "User panel",
   "pf.lead": "What's in this scan, plus shortcuts for how the tool looks.",
   "pf.findings": "findings",
@@ -634,11 +646,7 @@ const en: Record<TKey, string> = {
   "pf.noScan": "No scan data yet.",
 
   "splash.sub": "Active Directory audit · ENS [op.acc]",
-  "splash.loading": "Loading the compliance dashboard",
-  "splash.s1": "Loading the dashboard…",
-  "splash.s2": "Loading the ENS mapping engine…",
-  "splash.s3": "Preparing GRC alerts…",
-  "splash.s4": "Preparing the report…",
+  "splash.loading": "Loading the dashboard",
 };
 
 const DICTS: Record<Lang, Record<TKey, string>> = { es, en };

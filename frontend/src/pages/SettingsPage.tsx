@@ -48,7 +48,7 @@ export default function SettingsPage({ notify }: Props) {
 
   return (
     <>
-      <PageHead id="page-title" eyebrow={t("set.eyebrow")} title={t("set.title")} lead={t("set.lead")} />
+      <PageHead id="page-title" title={t("set.title")} lead={t("set.lead")} />
       <div className="settings">
         <section className="card" aria-labelledby="set-h-appearance">
           <h3 id="set-h-appearance">{t("set.appearance")}</h3>

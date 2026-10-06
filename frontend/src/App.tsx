@@ -11,6 +11,7 @@ import RiskMatrixGrid from "./components/RiskMatrix";
 import SeverityCards from "./components/SeverityCards";
 import Sidebar, { type PageId, type SectionId, type View } from "./components/Sidebar";
 import Splash from "./components/Splash";
+import Toast from "./components/Toast";
 import TopBar from "./components/TopBar";
 import HelpPage from "./pages/HelpPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -20,6 +21,7 @@ import { useSettings } from "./settings/SettingsContext";
 import type { TKey } from "./settings/i18n";
 import { alertMatchesCoverage } from "./coverageFilter";
 import { appendixMarkdown, type TreatStatus } from "./treatment";
+import { buildStudioEvidencia } from "./studioEvidencia";
 import { RISK_ORDER, type AuditRequest, type GRCAlert, type RiskLevel, type ScanResponse } from "./types";
 
 const SECTION_LABEL: Record<SectionId, TKey> = {
@@ -86,11 +88,6 @@ export default function App() {
   tRef.current = t;
 
   const notify = useCallback((msg: string) => setToast(msg), []);
-  useEffect(() => {
-    if (!toast) return;
-    const id = window.setTimeout(() => setToast(null), 2800);
-    return () => window.clearTimeout(id);
-  }, [toast]);
 
   useEffect(() => {
     document.body.classList.toggle("drawer-open", drawerOpen);
@@ -289,6 +286,19 @@ export default function App() {
     notify(t("toast.downloaded", { f: "anexo-tratamiento.md" }));
   };
 
+  const downloadStudio = () => {
+    const live = !!data?.scanned;
+    const payload = buildStudioEvidencia(data?.alerts ?? [], live ? data?.domain ?? null : null);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "evidencia-studio-ens-ad-auditor.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    notify(t("toast.downloaded", { f: "evidencia-studio-ens-ad-auditor.json" }));
+  };
+
   const loadPreview = async () => {
     setPreviewLoading(true);
     try {
@@ -369,7 +379,6 @@ export default function App() {
               <>
                 <div className="page-head" id="panel">
                   <div className="ph-text">
-                    <div className="eyebrow">{t("dash.eyebrow")}</div>
                     <h1>{t("dash.title")}</h1>
                     <p className="lead">
                       {t("dash.lead")}
@@ -611,6 +620,7 @@ export default function App() {
                           </span>
                           <h3>{t("report.cardTitle")}</h3>
                           <p className="muted small">{t("report.cardText")}</p>
+                          <p className="muted small">{t("report.studioText")}</p>
                           <div className="row">
                             <button
                               type="button"
@@ -624,6 +634,10 @@ export default function App() {
                             <button type="button" className="btn" onClick={downloadAppendix}>
                               <Icon name="fileCheck" size={16} />
                               {t("treat.download")}
+                            </button>
+                            <button type="button" className="btn" onClick={downloadStudio}>
+                              <Icon name="download" size={16} />
+                              {t("report.studio")}
                             </button>
                             <button
                               type="button"
@@ -674,12 +688,7 @@ export default function App() {
           />
         </div>
 
-        {toast && (
-          <div className="toast" role="status">
-            <Icon name="check" size={16} />
-            {toast}
-          </div>
-        )}
+        {toast && <Toast message={toast} onGone={() => setToast(null)} />}
       </div>
     </>
   );
