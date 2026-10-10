@@ -25,6 +25,8 @@ import { useSettings } from "./settings/SettingsContext";
 import type { TKey } from "./settings/i18n";
 import { alertMatchesCoverage } from "./coverageFilter";
 import { appendixMarkdown, type TreatStatus } from "./treatment";
+import { buildEcosistema } from "./ecosistema";
+import { VERSION } from "./pages/SupportPage";
 import { buildStudioEvidencia } from "./studioEvidencia";
 import { RISK_ORDER, type AuditRequest, type GRCAlert, type RiskLevel, type ScanResponse } from "./types";
 
@@ -387,6 +389,19 @@ export default function App() {
     notify(t("toast.downloaded", { f: "evidencia-studio-ens-ad-auditor.json" }));
   };
 
+  const downloadEcosistema = () => {
+    const live = !!data?.scanned;
+    const payload = buildEcosistema(data?.alerts ?? [], live ? data?.domain ?? null : null, VERSION);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ecosistema-ens-ad-auditor.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    notify(t("toast.downloaded", { f: "ecosistema-ens-ad-auditor.json" }));
+  };
+
   const loadPreview = async () => {
     setPreviewLoading(true);
     try {
@@ -718,6 +733,7 @@ export default function App() {
                           <h3>{t("report.cardTitle")}</h3>
                           <p className="muted small">{t("report.cardText")}</p>
                           <p className="muted small">{t("report.studioText")}</p>
+                          <p className="muted small">{t("report.ecoText")}</p>
                           <div className="row">
                             <button
                               type="button"
@@ -735,6 +751,10 @@ export default function App() {
                             <button type="button" className="btn" onClick={downloadStudio}>
                               <Icon name="download" size={16} />
                               {t("report.studio")}
+                            </button>
+                            <button type="button" className="btn" onClick={downloadEcosistema}>
+                              <Icon name="download" size={16} />
+                              {t("report.eco")}
                             </button>
                             <button
                               type="button"

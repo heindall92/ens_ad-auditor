@@ -9,7 +9,7 @@ import PageHead from "./PageHead";
 type Tab = "flow" | "glossary" | "faq" | "about";
 
 const SUITE: {
-  id: "here" | "studio" | "rosetta" | "kairos";
+  id: "here" | "studio" | "rosetta" | "kairos" | "argos" | "ctem" | "norvik";
   name: string;
   descKey: TKey;
   app?: string;
@@ -41,6 +41,26 @@ const SUITE: {
     descKey: "help.suite.kairos",
     app: "https://heindall92.github.io/kairos/",
     repo: "https://github.com/heindall92/kairos",
+  },
+  {
+    id: "ctem",
+    name: "CTEM-Nexus",
+    descKey: "help.suite.ctem",
+    app: "https://heindall92.github.io/ctem-nexus/",
+    repo: "https://github.com/heindall92/ctem-nexus",
+  },
+  {
+    id: "argos",
+    name: "ARGOS",
+    descKey: "help.suite.argos",
+    app: "https://heindall92.github.io/argos-grc/",
+    repo: "https://github.com/heindall92/argos-grc",
+  },
+  {
+    id: "norvik",
+    name: "Norvik",
+    descKey: "help.suite.norvik",
+    repo: "https://github.com/heindall92/Norvik_Gobernanza",
   },
 ];
 

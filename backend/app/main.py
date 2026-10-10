@@ -16,6 +16,8 @@ POST /api/report       -> Markdown report of a live audit.
 GET  /api/report.json  -> JSON report of the empty scan.
 POST /api/report.json  -> JSON report of a live audit.
 GET  /api/export/studio -> Studio evidencia JSON (empty without credentials).
+GET  /api/export/ecosistema -> "yrd-ecosistema" envelope for CTEM-Nexus (empty without credentials).
+POST /api/export/ecosistema -> the same envelope from a live audit.
 
 Credentials are used only for the request and are never written to disk.
 Live enumeration is read-only (Kerberos/delegation/AD CS/SMB configuration).
@@ -37,6 +39,7 @@ from app.mapping import (
 )
 from app.models import AuditRequest, DomainSummary, RiskMatrix, ScanResponse
 from app.report import build_json_report, build_markdown_report, counts_by_risk
+from app.ecosistema import build_ecosistema
 from app.studio_evidencia import build_studio_evidencia
 
 app = FastAPI(
@@ -46,7 +49,7 @@ app = FastAPI(
         "Seguridad). Traduce hallazgos técnicos a incumplimientos [op.acc]. "
         "Solo para auditorías con autorización expresa por escrito."
     ),
-    version="0.3.0",
+    version="0.4.0",
 )
 
 app.add_middleware(
@@ -124,6 +127,7 @@ def root():
             "/api/report",
             "/api/report.json",
             "/api/export/studio",
+            "/api/export/ecosistema",
         ],
         "warning": (
             "Solo auditorías autorizadas por escrito. Sin credenciales la API "
@@ -186,6 +190,18 @@ def report_markdown_live(req: AuditRequest):
 def export_studio_empty():
     """No credentials: empty hallazgos list. Never fabricates evidence."""
     return build_studio_evidencia([], domain=None)
+
+
+@app.get("/api/export/ecosistema")
+def export_ecosistema_empty():
+    """No credentials: empty envelope. Never fabricates findings."""
+    return build_ecosistema([], domain=None, app_version=app.version)
+
+
+@app.post("/api/export/ecosistema")
+def export_ecosistema_live(req: AuditRequest):
+    result = _run_live(req)
+    return build_ecosistema(result.alerts, domain=result.domain, app_version=app.version)
 
 
 @app.get("/api/report.json")

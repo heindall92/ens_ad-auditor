@@ -1,5 +1,19 @@
 # Cambios
 
+## 0.4.0 · octubre de 2026
+
+**Ecosistema**
+- Nuevo sobre `yrd-ecosistema` (versión 1, tipo `hallazgos`) para CTEM-Nexus: lleva las alertas tal como las emite el informe JSON, más un resumen con el dominio, el recuento por riesgo y las rutas hacia Domain Admins. CTEM-Nexus las convierte en hallazgos de identidad con técnicas ATT&CK y rutas de ataque hacia el controlador de dominio.
+- Panel: botón «Exportar para CTEM-Nexus» en Informe. API: `GET /api/export/ecosistema` (vacío sin credenciales) y `POST /api/export/ecosistema` (auditoría en vivo). Como la exportación a Studio, sin alertas el sobre va vacío y los hallazgos de muestra no salen nunca.
+- Ayuda → Acerca de: las otras seis herramientas GRC del autor (se suman CTEM-Nexus, ARGOS y Norvik).
+
+**Accesibilidad**
+- axe-core encontraba 41 nodos con contraste insuficiente en claro y 3 en oscuro. Se corrige en los tokens: `--muted` pasa a `#5a6a72` (5,1:1 sobre el fondo), `--ok` a `#17703e`, las etiquetas y segmentos activos mezclan el acento con la tinta y el enlace «Cómo instalarlo» usa la tinta subrayada. Ahora hay 0 infracciones en todas las vistas, en claro y en oscuro.
+
+**Pruebas**
+- 4 nuevas de `pytest` para el sobre (45 en total): cabecera válida, vacío honesto, muestras excluidas, alerta intacta y endpoint.
+- La versión mostrada en Acerca de y en Soporte vuelve a coincidir con la del paquete (0.4.0).
+
 ## 0.3.1 · octubre de 2026
 
 **GitHub Pages**

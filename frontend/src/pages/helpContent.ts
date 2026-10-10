@@ -121,7 +121,7 @@ const es: HelpContent = {
     ["¿Puedo pasar las alertas a ENS Compliance Studio?", "Sí. En Informe, «Exportar evidencia para Studio» genera un JSON con las alertas de esta enumeración. Si no hay alertas, el array va vacío. Hay que crear en Studio un activo con id AD antes de importar."],
   ],
   about: [
-    "ENS AD Auditor 0.3.0. Auditor de Active Directory mapeado al Esquema Nacional de Seguridad. Matriz MAGERIT y enumeración de solo lectura.",
+    "ENS AD Auditor 0.4.0. Auditor de Active Directory mapeado al Esquema Nacional de Seguridad. Matriz MAGERIT y enumeración de solo lectura.",
     "Autor: Yoandy Ramírez Delgado · Junior Pentester · eJPTv2.",
     "Marco de referencia: Real Decreto 311/2022 (ENS), marco operacional · control de acceso [op.acc]. Las claves ESC salen del resultado de Certipy find.",
     "Backend en FastAPI y panel en React + TypeScript + Vite.",
@@ -227,7 +227,7 @@ const en: HelpContent = {
     ["Can I pass the alerts to ENS Compliance Studio?", "Yes. In Report, “Export evidence for Studio” builds a JSON file from this enumeration's alerts. If there are no alerts, the array is empty. Create an asset with id AD in Studio before importing."],
   ],
   about: [
-    "ENS AD Auditor 0.3.0. Active Directory auditor mapped to the ENS (Spain's National Security Framework). MAGERIT matrix and read-only enumeration.",
+    "ENS AD Auditor 0.4.0. Active Directory auditor mapped to the ENS (Spain's National Security Framework). MAGERIT matrix and read-only enumeration.",
     "Author: Yoandy Ramírez Delgado · Junior Pentester · eJPTv2.",
     "Reference framework: Royal Decree 311/2022 (ENS), operational framework · access control [op.acc]. ESC keys come from the Certipy find result.",
     "FastAPI backend and React + TypeScript + Vite dashboard.",

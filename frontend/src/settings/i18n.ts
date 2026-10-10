@@ -176,6 +176,9 @@ const es = {
   "report.studio": "Exportar evidencia para Studio",
   "report.studioText":
     "JSON para Evidencia técnica de ENS Compliance Studio. Sale de las alertas de esta enumeración. Si no hay alertas, el fichero va vacío.",
+  "report.eco": "Exportar para CTEM-Nexus",
+  "report.ecoText":
+    "Sobre «yrd-ecosistema» con las mismas alertas para CTEM-Nexus, que las convierte en hallazgos de identidad con técnicas ATT&CK y rutas de ataque hacia el controlador de dominio.",
   "report.generating": "Generando…",
   "report.preview": "Vista previa",
   "report.refreshPreview": "Actualizar vista previa",
@@ -282,10 +285,13 @@ const es = {
   "help.flowAria": "Flujo de información del auditor",
   "help.suite.title": "Otras herramientas GRC",
   "help.suite.lead":
-    "ENS Compliance Studio prepara la conformidad con el ENS. Rosetta relaciona marcos. KAIROS cubre la continuidad. Este auditor aporta evidencias [op.acc] de Active Directory.",
+    "Se complementan y comparten un formato de intercambio: ARGOS te entrena, Rosetta traduce entre marcos, ENS Compliance Studio prepara la conformidad con el ENS, KAIROS cubre la continuidad, CTEM-Nexus mide la exposición técnica, este auditor revisa el directorio y Norvik gobierna el conjunto.",
   "help.suite.here": "Enumeración de solo lectura de Active Directory, mapeada a [op.acc] con criticidad MAGERIT.",
   "help.suite.studio": "Categorización, riesgos MAGERIT, Declaración de Aplicabilidad y preauditoría del ENS.",
-  "help.suite.rosetta": "Mapa multinorma ENS · ISO/IEC 27001 · NIS2 · ISO/IEC 42001.",
+  "help.suite.rosetta": "Mapa multinorma: 15 normas y leyes de la UE, EE. UU. y Latinoamérica sobre 152 controles unificados.",
+  "help.suite.argos": "Laboratorio de práctica GRC: rutas, máquinas con flags y simulacros cronometrados, con rangos y logros.",
+  "help.suite.ctem": "Gestión de la exposición: prioriza hallazgos de escáneres y pentest y dibuja las rutas de ataque hacia los activos críticos.",
+  "help.suite.norvik": "Gobernanza de escritorio: roles, responsables y políticas que unen al resto de herramientas.",
   "help.suite.kairos": "Continuidad de negocio: BIA, BCP y DRP con la ruta crítica de recuperación.",
   "help.suite.hereBadge": "Estás aquí",
   "help.suite.open": "Abrir",
@@ -523,6 +529,9 @@ const en: Record<TKey, string> = {
   "report.studio": "Export evidence for Studio",
   "report.studioText":
     "JSON for ENS Compliance Studio technical evidence. Built from this enumeration's alerts. If there are no alerts, the file is empty.",
+  "report.eco": "Export for CTEM-Nexus",
+  "report.ecoText":
+    "“yrd-ecosistema” envelope with the same alerts for CTEM-Nexus, which turns them into identity findings with ATT&CK techniques and attack paths to the domain controller.",
   "report.generating": "Generating…",
   "report.preview": "Preview",
   "report.refreshPreview": "Refresh preview",
@@ -621,10 +630,13 @@ const en: Record<TKey, string> = {
   "help.flowAria": "Auditor information flow",
   "help.suite.title": "Other GRC tools",
   "help.suite.lead":
-    "ENS Compliance Studio prepares ENS conformity. Rosetta maps frameworks. KAIROS covers continuity. This auditor supplies [op.acc] evidence from Active Directory.",
+    "They work together and share one exchange format: ARGOS trains you, Rosetta translates between frameworks, ENS Compliance Studio prepares ENS conformity, KAIROS covers continuity, CTEM-Nexus measures technical exposure, this auditor reviews the directory and Norvik governs the whole.",
   "help.suite.here": "Read-only Active Directory enumeration, mapped to [op.acc] with MAGERIT rating.",
   "help.suite.studio": "Categorisation, MAGERIT risks, Statement of Applicability and ENS pre-audit.",
-  "help.suite.rosetta": "Multi-framework map: ENS · ISO/IEC 27001 · NIS2 · ISO/IEC 42001.",
+  "help.suite.rosetta": "Multi-framework map: 15 standards and laws from the EU, the US and Latin America on 152 unified controls.",
+  "help.suite.argos": "GRC practice lab: paths, machines with flags and timed mock exams, with ranks and badges.",
+  "help.suite.ctem": "Exposure management: prioritises scanner and pentest findings and draws the attack paths to critical assets.",
+  "help.suite.norvik": "Desktop governance: roles, owners and policies that tie the other tools together.",
   "help.suite.kairos": "Business continuity: BIA, BCP and DRP with the critical recovery path.",
   "help.suite.hereBadge": "You are here",
   "help.suite.open": "Open",
