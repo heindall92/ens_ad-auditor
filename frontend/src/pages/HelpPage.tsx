@@ -9,7 +9,7 @@ import PageHead from "./PageHead";
 type Tab = "flow" | "glossary" | "faq" | "about";
 
 const SUITE: {
-  id: "here" | "studio" | "rosetta" | "kairos" | "argos" | "ctem" | "norvik";
+  id: "here" | "studio" | "rosetta" | "kairos" | "argos" | "ctem" | "mcpshield" | "norvik";
   name: string;
   descKey: TKey;
   app?: string;
@@ -55,6 +55,13 @@ const SUITE: {
     descKey: "help.suite.argos",
     app: "https://heindall92.github.io/argos-grc/",
     repo: "https://github.com/heindall92/argos-grc",
+  },
+  {
+    id: "mcpshield",
+    name: "MCP-Shield",
+    descKey: "help.suite.mcpshield",
+    app: "https://heindall92.github.io/mcp-shield/",
+    repo: "https://github.com/heindall92/mcp-shield",
   },
   {
     id: "norvik",

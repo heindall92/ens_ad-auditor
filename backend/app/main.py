@@ -49,7 +49,7 @@ app = FastAPI(
         "Seguridad). Traduce hallazgos técnicos a incumplimientos [op.acc]. "
         "Solo para auditorías con autorización expresa por escrito."
     ),
-    version="0.4.0",
+    version="0.4.1",
 )
 
 app.add_middleware(
