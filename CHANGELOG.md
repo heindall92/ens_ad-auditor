@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.4.1 · octubre de 2026
+
+- **Herramientas GRC del autor:** Ayuda → Acerca de suma **MCP-Shield**, que audita las configuraciones MCP de los asistentes de IA (Claude Desktop, Cursor, VS Code). Como ENS AD Auditor, envía sus hallazgos a CTEM-Nexus con el sobre `yrd-ecosistema`, y de ahí llegan a Rosetta como evidencia por control.
+
 ## 0.4.0 · octubre de 2026
 
 **Ecosistema**
