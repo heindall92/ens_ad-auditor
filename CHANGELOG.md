@@ -1,5 +1,9 @@
 # Cambios
 
+## 0.4.2 · octubre de 2026
+
+- **Herramientas GRC del autor:** Ayuda → Acerca de suma **Atlas GRC**, que enseña la ISO/IEC 27001 desde cero con lecciones, prácticas, simulacros CertiProf y la ciudad de Albatrel que crece contigo. La frase de resumen empieza por «Atlas te enseña la norma». También aparece en el README.
+
 ## 0.4.1 · octubre de 2026
 
 - **Herramientas GRC del autor:** Ayuda → Acerca de suma **MCP-Shield**, que audita las configuraciones MCP de los asistentes de IA (Claude Desktop, Cursor, VS Code). Como ENS AD Auditor, envía sus hallazgos a CTEM-Nexus con el sobre `yrd-ecosistema`, y de ahí llegan a Rosetta como evidencia por control.

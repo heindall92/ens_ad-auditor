@@ -9,7 +9,7 @@ import PageHead from "./PageHead";
 type Tab = "flow" | "glossary" | "faq" | "about";
 
 const SUITE: {
-  id: "here" | "studio" | "rosetta" | "kairos" | "argos" | "ctem" | "mcpshield" | "norvik";
+  id: "here" | "atlas" | "studio" | "rosetta" | "kairos" | "argos" | "ctem" | "mcpshield" | "norvik";
   name: string;
   descKey: TKey;
   app?: string;
@@ -20,6 +20,13 @@ const SUITE: {
     name: "ENS AD Auditor",
     descKey: "help.suite.here",
     repo: "https://github.com/heindall92/ens_ad-auditor",
+  },
+  {
+    id: "atlas",
+    name: "Atlas GRC",
+    descKey: "help.suite.atlas",
+    app: "https://heindall92.github.io/atlas-grc/",
+    repo: "https://github.com/heindall92/atlas-grc",
   },
   {
     id: "studio",

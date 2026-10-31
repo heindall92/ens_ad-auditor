@@ -285,8 +285,9 @@ const es = {
   "help.flowAria": "Flujo de información del auditor",
   "help.suite.title": "Otras herramientas GRC",
   "help.suite.lead":
-    "Se complementan y comparten un formato de intercambio: ARGOS te entrena, Rosetta traduce entre marcos, ENS Compliance Studio prepara la conformidad con el ENS, KAIROS cubre la continuidad, CTEM-Nexus mide la exposición técnica, este auditor revisa el directorio, MCP-Shield audita los asistentes de IA y Norvik gobierna el conjunto.",
+    "Se complementan y comparten un formato de intercambio: Atlas te enseña la norma, ARGOS te entrena, Rosetta traduce entre marcos, ENS Compliance Studio prepara la conformidad con el ENS, KAIROS cubre la continuidad, CTEM-Nexus mide la exposición técnica, este auditor revisa el directorio, MCP-Shield audita los asistentes de IA y Norvik gobierna el conjunto.",
   "help.suite.here": "Enumeración de solo lectura de Active Directory, mapeada a [op.acc] con criticidad MAGERIT.",
+  "help.suite.atlas": "Aprender la ISO/IEC 27001 desde cero: lecciones, prácticas, simulacros CertiProf y la ciudad de Albatrel que crece contigo.",
   "help.suite.studio": "Categorización, riesgos MAGERIT, Declaración de Aplicabilidad y preauditoría del ENS.",
   "help.suite.rosetta": "Mapa multinorma: 15 normas y leyes de la UE, EE. UU. y Latinoamérica sobre 152 controles unificados.",
   "help.suite.argos": "Laboratorio de práctica GRC: rutas, máquinas con flags y simulacros cronometrados, con rangos y logros.",
@@ -631,8 +632,9 @@ const en: Record<TKey, string> = {
   "help.flowAria": "Auditor information flow",
   "help.suite.title": "Other GRC tools",
   "help.suite.lead":
-    "They work together and share one exchange format: ARGOS trains you, Rosetta translates between frameworks, ENS Compliance Studio prepares ENS conformity, KAIROS covers continuity, CTEM-Nexus measures technical exposure, this auditor reviews the directory, MCP-Shield audits AI assistants and Norvik governs the whole.",
+    "They work together and share one exchange format: Atlas teaches you the standard, ARGOS trains you, Rosetta translates between frameworks, ENS Compliance Studio prepares ENS conformity, KAIROS covers continuity, CTEM-Nexus measures technical exposure, this auditor reviews the directory, MCP-Shield audits AI assistants and Norvik governs the whole.",
   "help.suite.here": "Read-only Active Directory enumeration, mapped to [op.acc] with MAGERIT rating.",
+  "help.suite.atlas": "Learn ISO/IEC 27001 from scratch: lessons, practice, CertiProf mock exams and the city of Albatrel that grows with you.",
   "help.suite.studio": "Categorisation, MAGERIT risks, Statement of Applicability and ENS pre-audit.",
   "help.suite.rosetta": "Multi-framework map: 15 standards and laws from the EU, the US and Latin America on 152 unified controls.",
   "help.suite.argos": "GRC practice lab: paths, machines with flags and timed mock exams, with ranks and badges.",
